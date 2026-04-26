@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 675" role="img" aria-label="Parve quinoa and roasted vegetables">
+  <rect width="900" height="675" fill="#f5ead7"/>
+  <rect x="60" y="70" width="780" height="535" rx="30" fill="#fff9ef"/>
+  <circle cx="450" cy="338" r="210" fill="#2e6960"/>
+  <circle cx="450" cy="338" r="176" fill="#fff7e7"/>
+  <path d="M300 375c86-156 237-168 304-15-85 71-196 78-304 15z" fill="#c88547"/>
+  <path d="M305 320c106 42 214 42 310 4" stroke="#e7c16f" stroke-width="22" stroke-linecap="round"/>
+  <path d="M354 258c20 55 80 77 139 34M410 435c38-34 95-42 143-14" stroke="#78a394" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="358" cy="366" r="24" fill="#f0d37e"/>
+  <circle cx="513" cy="311" r="22" fill="#9bb86f"/>
+  <circle cx="564" cy="386" r="20" fill="#dba75f"/>
+</svg>

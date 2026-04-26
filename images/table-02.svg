@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 675" role="img" aria-label="Kosher chicken herb platter">
+  <rect width="900" height="675" fill="#ecddc2"/>
+  <path d="M0 70h900M0 185h900M0 300h900M0 415h900M0 530h900" stroke="#d0b48a" stroke-width="8" opacity="0.35"/>
+  <circle cx="450" cy="338" r="236" fill="#fdf8ed" stroke="#315d73" stroke-width="18"/>
+  <path d="M271 369c93-176 276-194 362-30-92 92-231 104-362 30z" fill="#b87543"/>
+  <path d="M339 284c50 45 115 50 186 12" stroke="#f3d18b" stroke-width="24" stroke-linecap="round"/>
+  <path d="M315 420c86 31 174 23 260-19" stroke="#5f8e83" stroke-width="20" stroke-linecap="round"/>
+  <path d="M292 315c43 19 81 17 114-5M513 426c45 8 83-4 114-34" stroke="#fff6df" stroke-width="15" stroke-linecap="round"/>
+</svg>
