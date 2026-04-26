@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 675" role="img" aria-label="Fresh kosher herb salad without tomatoes">
+  <rect width="900" height="675" fill="#f3e4cc"/>
+  <circle cx="450" cy="338" r="244" fill="#fffaf0" stroke="#2f655d" stroke-width="18"/>
+  <path d="M249 367c117-134 282-137 402-12-111 88-265 92-402 12z" fill="#5f8e83"/>
+  <path d="M310 317c73-40 148-41 226-5" stroke="#a6be73" stroke-width="19" stroke-linecap="round"/>
+  <path d="M335 410c70 34 151 32 244-5" stroke="#f3d18b" stroke-width="17" stroke-linecap="round"/>
+  <circle cx="363" cy="356" r="27" fill="#d7a24f"/>
+  <circle cx="475" cy="310" r="22" fill="#e8ca76"/>
+  <circle cx="558" cy="371" r="25" fill="#d7a24f"/>
+  <path d="M296 267c32 45 69 52 113 22M499 456c42-31 86-35 132-10" stroke="#fff8eb" stroke-width="15" stroke-linecap="round"/>
+</svg>

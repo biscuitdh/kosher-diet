@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 675" role="img" aria-label="Root vegetable holiday side dish">
+  <rect width="900" height="675" fill="#f8efd9"/>
+  <rect x="0" y="0" width="900" height="675" fill="#6b8f86" opacity="0.18"/>
+  <ellipse cx="450" cy="345" rx="300" ry="224" fill="#fff8eb" stroke="#8b5e8e" stroke-width="17"/>
+  <path d="M266 386c98-139 262-161 371-19-84 83-237 94-371 19z" fill="#d09352"/>
+  <path d="M326 310c73 31 146 29 218-7" stroke="#f2c66d" stroke-width="20" stroke-linecap="round"/>
+  <path d="M336 440c88-28 169-29 241-1" stroke="#7b9f62" stroke-width="17" stroke-linecap="round"/>
+  <rect x="392" y="226" width="75" height="158" rx="38" fill="#c97545" transform="rotate(18 430 305)"/>
+  <rect x="493" y="248" width="74" height="151" rx="37" fill="#e0b15e" transform="rotate(-20 530 323)"/>
+  <rect x="312" y="283" width="70" height="139" rx="35" fill="#b184bd" transform="rotate(-30 347 352)"/>
+</svg>
