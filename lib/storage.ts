@@ -1,6 +1,7 @@
 "use client";
 
 import { RECIPE_IMAGE_PLACEHOLDERS, STORAGE_KEYS } from "@/lib/constants";
+import { findCatalogRecipeById } from "@/lib/catalog";
 import {
   recipeRecordSchema,
   savedRecipeSchema,
@@ -93,7 +94,7 @@ export function removeSavedRecipe(id: string) {
 }
 
 export function findRecipeById(id: string): RecipeRecord | SavedRecipe | undefined {
-  return [...loadGeneratedRecipes(), ...loadSavedRecipes()].find((record) => record.id === id);
+  return [...loadSavedRecipes(), ...loadGeneratedRecipes()].find((record) => record.id === id) ?? findCatalogRecipeById(id);
 }
 
 export function checkClientAiRateLimit(now = Date.now()) {

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/generate", label: "Generate", icon: Sparkles }
+  { href: "/generate", label: "Find", icon: Sparkles }
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

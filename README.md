@@ -1,6 +1,6 @@
 # KosherTable
 
-KosherTable is a Next.js 15 MVP for kosher, allergy-aware recipe generation. It uses one fixed safety profile, stores recipes locally in the browser, calls LLMs only from the server, and validates every generated recipe against deterministic kosher and allergy blocklists.
+KosherTable is a Next.js 15 MVP for kosher, allergy-aware meal planning. The default experience uses a bundled 1,000-recipe safe catalog for free mobile testing, stores saved recipes locally in the browser, and keeps optional AI generation behind server-only code for later.
 
 ## Primary Recommendation
 
@@ -13,7 +13,7 @@ docker compose up web-dev
 
 Open `http://localhost:3000`.
 
-For local demo mode, keep:
+The app works without AI keys because `/generate` searches the local catalog. For optional local AI demo mode later, keep:
 
 ```bash
 LLM_PROVIDER=mock
@@ -66,8 +66,9 @@ GROK_BASE_URL=https://api.x.ai/v1
 - Routes:
   - `/` dashboard
   - `/onboarding` redirect to generator for old links
-  - `/generate` AI recipe generation
+  - `/generate` local catalog recipe finder
   - `/recipes/[id]` recipe view
+  - `/recipes/local?id=...` static-safe localStorage recipe view
   - `/api/recipes/generate` server API route
 - LocalStorage keys:
   - `koshertable.savedRecipes.v1`
@@ -78,16 +79,19 @@ GROK_BASE_URL=https://api.x.ai/v1
   - Anthropic messages
   - Grok/xAI OpenAI-compatible chat completions
   - Mock local provider
+  - Optional only; not required for the default catalog flow
 
 ## Security And Operational Notes
 
-- API keys never go to the browser.
+- The default catalog flow does not need API keys, a database, or paid inference.
+- API keys never go to the browser when optional AI is enabled.
 - Production defaults fail closed if provider config is missing.
-- Every LLM call uses the strict kosher/allergy system prompt verbatim.
+- Every bundled catalog recipe is schema-validated and checked against the fixed safety profile.
+- Every optional LLM call uses the strict kosher/allergy system prompt verbatim.
 - The server forces the fixed safety profile on every generation request, even if a client submits weaker settings.
 - Server validates request shape with Zod, validates model output with Zod, then checks forbidden ingredients.
 - Client validates generated recipe safety again before saving or rendering.
-- Client-side limit: 5 AI calls per 10 minutes.
+- Client-side AI limit remains available for the optional AI path: 5 AI calls per 10 minutes.
 - Server-side in-memory limit: 20 AI calls per hour per client IP per container.
 - No external auth in MVP. This is intentionally easy to wrap with Clerk later.
 
@@ -113,6 +117,20 @@ docker compose run --rm web-dev npm run typecheck
 docker compose run --rm web-dev npm run lint
 docker compose run --rm web-dev npm run test
 docker compose build web
+```
+
+GitHub Pages static export:
+
+```bash
+npm run build:github
+```
+
+This writes the static site to `out/` with `NEXT_PUBLIC_BASE_PATH=/kosher-diet`. If the repository is renamed, update `build:github` before deploying.
+
+For the current free testing setup, publish `out/` to a `gh-pages` branch and set **Settings → Pages → Source** to **Deploy from a branch**, then choose **gh-pages / root**. The Pages URL will be:
+
+```text
+https://biscuitdh.github.io/kosher-diet/
 ```
 
 ## OCI / OCIR Deployment

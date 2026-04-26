@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { withBasePath } from "@/lib/assets";
 import { findRecipeById, loadSavedRecipes, removeSavedRecipe, upsertSavedRecipe } from "@/lib/storage";
 import type { RecipeRecord, SavedRecipe } from "@/lib/schemas";
 import { formatMinutes, titleCase } from "@/lib/utils";
@@ -51,7 +52,14 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
       setIsSaved(false);
       return;
     }
-    upsertSavedRecipe({ ...record, source: "generated" });
+    upsertSavedRecipe({
+      id: record.id,
+      recipe: record.recipe,
+      createdAt: record.createdAt,
+      updatedAt: new Date().toISOString(),
+      imagePath: record.imagePath,
+      source: record.source
+    });
     setIsSaved(true);
   }
 
@@ -60,11 +68,11 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
       <Card className="mx-auto max-w-xl">
         <CardHeader>
           <CardTitle>Recipe not found</CardTitle>
-          <CardDescription>LocalStorage does not have a recipe with this ID.</CardDescription>
+          <CardDescription>The local catalog and saved recipes do not have a recipe with this ID.</CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild>
-            <Link href="/generate">Generate a new recipe</Link>
+            <Link href="/generate">Find a recipe</Link>
           </Button>
         </CardContent>
       </Card>
@@ -87,7 +95,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
       <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="overflow-hidden rounded-lg border bg-card shadow-soft">
           <div className="aspect-[4/3] bg-muted">
-            <Image src={record.imagePath} alt="" width={900} height={675} priority className="size-full object-cover" />
+            <Image src={withBasePath(record.imagePath)} alt="" width={900} height={675} priority className="size-full object-cover" />
           </div>
         </div>
 
@@ -131,7 +139,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
             <Button asChild variant="outline" size="lg">
               <Link href={`/generate?variation=${record.id}`}>
                 <RefreshCw />
-                Regenerate variations
+                Find variations
               </Link>
             </Button>
           </div>

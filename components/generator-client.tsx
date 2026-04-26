@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Dice5, Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { AlertCircle, Dice5, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   appendSuggestion,
@@ -21,40 +20,10 @@ import {
   occasionSuggestions,
   type Suggestion
 } from "@/lib/generator-suggestions";
-import { apiGenerateResponseSchema, FIXED_SAFETY_PROFILE, generationRequestSchema, recipeSchema, type GenerationRequest, type Recipe } from "@/lib/schemas";
-import { checkClientAiRateLimit, createRecipeRecord, findRecipeById, recordClientAiCall, upsertGeneratedRecipe } from "@/lib/storage";
+import { findBestCatalogRecipe, pickRandomCatalogRecipe, searchCatalogRecipes } from "@/lib/catalog";
+import { FIXED_SAFETY_PROFILE, generationRequestSchema, type Recipe } from "@/lib/schemas";
+import { findRecipeById } from "@/lib/storage";
 import { validateRecipeSafety } from "@/lib/validators/forbidden-ingredients";
-
-const SURPRISES = [
-  {
-    occasion: "Shabbat lunch",
-    cuisinePreference: "Levantine-inspired",
-    mainIngredient: "chicken thighs",
-    availableIngredients: "fresh herbs, lemons, rice",
-    extraNotes: "Make it bright, herb-heavy, and safe without peppers."
-  },
-  {
-    occasion: "Weeknight dinner",
-    cuisinePreference: "Mediterranean",
-    mainIngredient: "lentils and sweet potatoes",
-    availableIngredients: "carrots, onions, garlic",
-    extraNotes: "One-pan or low cleanup preferred."
-  },
-  {
-    occasion: "Holiday side dish",
-    cuisinePreference: "Ashkenazi-inspired",
-    mainIngredient: "root vegetables",
-    availableIngredients: "parsnips, sweet potatoes, fresh herbs",
-    extraNotes: "No white potatoes; use sweet potato or parsnip."
-  },
-  {
-    occasion: "Light dairy-free lunch",
-    cuisinePreference: "Modern Israeli",
-    mainIngredient: "chickpeas",
-    availableIngredients: "cucumbers, parsley, lemon",
-    extraNotes: "Fresh herbs, lemon, no tomato salad shortcuts."
-  }
-];
 
 function SuggestionChips({
   label,
@@ -93,11 +62,8 @@ export function GeneratorClient() {
   const [availableIngredients, setAvailableIngredients] = useState("");
   const [servings, setServings] = useState("4");
   const [extraNotes, setExtraNotes] = useState("");
-  const [surpriseMe, setSurpriseMe] = useState(false);
   const [variationOf, setVariationOf] = useState<Recipe | undefined>();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [warnings, setWarnings] = useState<string[]>([]);
 
   useEffect(() => {
     const variationId = searchParams.get("variation");
@@ -109,33 +75,38 @@ export function GeneratorClient() {
     setCuisinePreference("Keep the same spirit, change the details");
     setMainIngredient(record.recipe.ingredients[0]?.name.replace(/\([^)]*\)/g, "").trim() || "safe seasonal ingredients");
     setAvailableIngredients("");
-    setExtraNotes(`Regenerate a distinct variation of "${record.recipe.title}" while preserving kosher and allergy safety.`);
+    setExtraNotes(`Find a distinct catalog variation of "${record.recipe.title}" while preserving kosher and allergy safety.`);
   }, [searchParams]);
 
-  const rateLimit = checkClientAiRateLimit();
   const filteredMainIngredientSuggestions = filterSuggestionsForProfile(mainIngredientSuggestions, profile);
   const filteredAvailableIngredientSuggestions = filterSuggestionsForProfile(availableIngredientSuggestions, profile);
+  const catalogQuery = useMemo(
+    () => ({
+      occasion,
+      cuisinePreference,
+      mainIngredient,
+      availableIngredients,
+      servings: Number(servings),
+      extraNotes,
+      variationOf
+    }),
+    [availableIngredients, cuisinePreference, extraNotes, mainIngredient, occasion, servings, variationOf]
+  );
+  const previewMatches = useMemo(() => searchCatalogRecipes(catalogQuery, 3), [catalogQuery]);
 
   function surprise() {
-    const pick = SURPRISES[Math.floor(Math.random() * SURPRISES.length)];
-    setOccasion(pick.occasion);
-    setCuisinePreference(pick.cuisinePreference);
-    setMainIngredient(pick.mainIngredient);
-    setAvailableIngredients(pick.availableIngredients);
-    setExtraNotes(pick.extraNotes);
-    setSurpriseMe(true);
-  }
-
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
     setError("");
-    setWarnings([]);
-
-    const limit = checkClientAiRateLimit();
-    if (!limit.allowed) {
-      setError(`Client-side AI limit reached. Try again after ${new Date(limit.resetAt).toLocaleTimeString()}.`);
+    const match = pickRandomCatalogRecipe(catalogQuery);
+    if (!match) {
+      setError("No matching catalog recipe was found.");
       return;
     }
+    router.push(`/recipes/${match.id}`);
+  }
+
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
 
     const request = generationRequestSchema.safeParse({
       occasion,
@@ -144,49 +115,27 @@ export function GeneratorClient() {
       availableIngredients,
       servings: Number(servings),
       extraNotes,
-      surpriseMe,
       variationOf
     });
 
     if (!request.success) {
-      setError(request.error.errors[0]?.message ?? "Generation request is invalid.");
+      setError(request.error.errors[0]?.message ?? "Recipe search is invalid.");
       return;
     }
 
-    setLoading(true);
-    recordClientAiCall();
-
-    try {
-      const response = await fetch("/api/recipes/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(toClientGenerationPayload(request.data))
-      });
-      const data = apiGenerateResponseSchema.parse(await response.json());
-
-      if (!response.ok || "error" in data) {
-        setError("error" in data ? data.error : "Recipe generation failed.");
-        return;
-      }
-
-      const recipe = recipeSchema.parse(data.recipe);
-      const safety = validateRecipeSafety(recipe, profile);
-      if (!safety.ok) {
-        setError("Client-side validation blocked the recipe because a forbidden ingredient was detected.");
-        return;
-      }
-
-      const record = createRecipeRecord(recipe, "generated");
-      upsertGeneratedRecipe(record);
-      setWarnings(data.safety.warnings ?? []);
-      router.push(`/recipes/${record.id}`);
-    } catch {
-      setError("Recipe generation failed. Check network/provider configuration and try again.");
-    } finally {
-      setLoading(false);
+    const record = findBestCatalogRecipe(request.data);
+    if (!record) {
+      setError("No matching catalog recipe was found.");
+      return;
     }
+
+    const safety = validateRecipeSafety(record.recipe, profile);
+    if (!safety.ok) {
+      setError("Safety validation blocked this catalog recipe. The catalog needs review before showing it.");
+      return;
+    }
+
+    router.push(`/recipes/${record.id}`);
   }
 
   return (
@@ -196,16 +145,16 @@ export function GeneratorClient() {
           <ShieldCheck className="mr-1 size-3.5" />
           Nightshade & Tomato Safe ✅
         </Badge>
-        <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Generate meal ideas</h1>
+        <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Find meal ideas</h1>
         <p className="text-muted-foreground">
-          The server includes the strict kosher/allergy prompt on every request, validates JSON, then blocks unsafe ingredients.
+          Search the bundled recipe catalog without an AI call, API key, or database bill.
         </p>
 
         <Card>
           <CardHeader>
-            <CardTitle>Current guardrails</CardTitle>
+            <CardTitle>Catalog guardrails</CardTitle>
             <CardDescription>
-              {profile.kosherPreference === "strict" ? "Strict kosher mode" : "Standard kosher mode"} with {profile.allergies.length} fixed allergy filters.
+              {profile.kosherPreference === "strict" ? "Strict kosher mode" : "Standard kosher mode"} with {profile.allergies.length} fixed allergy filters across 1,000 local recipes.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
@@ -218,9 +167,24 @@ export function GeneratorClient() {
         </Card>
 
         <Alert variant="safe">
-          <AlertTitle>AI rate limit</AlertTitle>
-          <AlertDescription>{rateLimit.remaining} client-side generation attempts remaining in the current 10-minute window.</AlertDescription>
+          <AlertTitle>Free testing mode</AlertTitle>
+          <AlertDescription>Finds recipes locally. The AI backend is still in the codebase, but this page does not need it.</AlertDescription>
         </Alert>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Best matches</CardTitle>
+            <CardDescription>Live preview from the local catalog.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {previewMatches.map((record) => (
+              <div key={record.id} className="rounded-lg border bg-background p-3">
+                <p className="text-sm font-semibold">{record.recipe.title}</p>
+                <p className="text-xs text-muted-foreground">{record.catalog.occasion} · {record.recipe.servings} servings</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </section>
 
       <Card>
@@ -236,22 +200,15 @@ export function GeneratorClient() {
             {error ? (
               <Alert variant="destructive">
                 <AlertCircle className="size-4" />
-                <AlertTitle>Generation blocked</AlertTitle>
+                <AlertTitle>Search blocked</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            {warnings.length > 0 ? (
-              <Alert>
-                <AlertTitle>Warnings</AlertTitle>
-                <AlertDescription>{warnings.join(" ")}</AlertDescription>
               </Alert>
             ) : null}
 
             {variationOf ? (
               <Alert>
                 <AlertTitle>Variation mode</AlertTitle>
-                <AlertDescription>Generating a distinct variation of {variationOf.title}.</AlertDescription>
+                <AlertDescription>Finding a distinct catalog variation of {variationOf.title}.</AlertDescription>
               </Alert>
             ) : null}
 
@@ -345,22 +302,14 @@ export function GeneratorClient() {
               />
             </div>
 
-            {loading ? (
-              <div className="space-y-3 rounded-lg border p-4">
-                <Skeleton className="h-5 w-2/3" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-5 w-1/2" />
-              </div>
-            ) : null}
-
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={surprise} disabled={loading}>
+              <Button type="button" variant="outline" onClick={surprise}>
                 <Dice5 />
                 Surprise Me
               </Button>
-              <Button type="submit" size="lg" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                Generate Recipe
+              <Button type="submit" size="lg">
+                <Search />
+                Find Recipe
               </Button>
             </div>
           </form>
@@ -368,17 +317,4 @@ export function GeneratorClient() {
       </Card>
     </div>
   );
-}
-
-function toClientGenerationPayload(request: GenerationRequest) {
-  return {
-    occasion: request.occasion,
-    cuisinePreference: request.cuisinePreference,
-    mainIngredient: request.mainIngredient,
-    availableIngredients: request.availableIngredients,
-    servings: request.servings,
-    extraNotes: request.extraNotes,
-    surpriseMe: request.surpriseMe,
-    variationOf: request.variationOf
-  };
 }

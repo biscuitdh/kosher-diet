@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createRecipeRecord, loadSavedRecipes, upsertSavedRecipe } from "@/lib/storage";
+import { listCatalogRecipes } from "@/lib/catalog";
+import { createRecipeRecord, findRecipeById, loadSavedRecipes, upsertSavedRecipe } from "@/lib/storage";
 
 describe("localStorage helpers", () => {
   beforeEach(() => {
@@ -22,5 +23,11 @@ describe("localStorage helpers", () => {
     expect(loadSavedRecipes()).toHaveLength(1);
     upsertSavedRecipe({ ...record, updatedAt: new Date().toISOString() });
     expect(loadSavedRecipes()).toHaveLength(1);
+  });
+
+  it("looks up bundled catalog recipes when localStorage has no match", () => {
+    const catalogRecord = listCatalogRecipes()[0];
+
+    expect(findRecipeById(catalogRecord.id)?.id).toBe(catalogRecord.id);
   });
 });

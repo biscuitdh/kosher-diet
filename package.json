@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:github": "NEXT_OUTPUT_EXPORT=true NEXT_PUBLIC_BASE_PATH=/kosher-diet next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

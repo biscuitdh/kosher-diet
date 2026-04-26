@@ -1,12 +1,17 @@
 .git
 .next
+out
 coverage
 node_modules
+**/node_modules
+food-guard
+.github
 playwright-report
 test-results
 .env
 .env.*
 !.env.example
+tsconfig.tsbuildinfo
 Dockerfile
 docker-compose.yml
 README.md
