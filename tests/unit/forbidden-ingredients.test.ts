@@ -32,6 +32,24 @@ describe("forbidden ingredient validator", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("allows fish, eggs, soy, gluten, nuts, and dairy under the fixed profile", () => {
+    for (const ingredient of [
+      "Salmon (parve)",
+      "Eggs (parve)",
+      "Tofu (parve)",
+      "Pasta (parve)",
+      "Almonds (parve)",
+      "Feta cheese (dairy)"
+    ]) {
+      expect(validateRecipeSafety(recipeWithIngredient(ingredient), createDefaultProfile()), ingredient).toMatchObject({ ok: true });
+    }
+  });
+
+  it("still blocks shellfish and non-kosher fish", () => {
+    expect(validateRecipeSafety(recipeWithIngredient("Shrimp (parve)"), createDefaultProfile()).ok).toBe(false);
+    expect(validateRecipeSafety(recipeWithIngredient("Catfish (parve)"), createDefaultProfile()).ok).toBe(false);
+  });
+
   it("blocks custom allergies", () => {
     const profile = { ...createDefaultProfile(), customAllergies: "mustard" };
     const result = validateRecipeSafety(recipeWithIngredient("Mustard seed (parve)"), profile);

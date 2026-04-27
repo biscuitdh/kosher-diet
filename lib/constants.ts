@@ -3,7 +3,9 @@ export const APP_NAME = "KosherTable";
 export const STORAGE_KEYS = {
   savedRecipes: "koshertable.savedRecipes.v1",
   generatedRecipes: "koshertable.generatedRecipes.v1",
-  aiRateLimit: "koshertable.aiRateLimit.v1"
+  aiRateLimit: "koshertable.aiRateLimit.v1",
+  finderDraft: "koshertable.finderDraft.v1",
+  recentSearches: "koshertable.recentSearches.v1"
 } as const;
 
 export const RECIPE_IMAGE_PLACEHOLDERS = [

@@ -44,9 +44,9 @@ export function DashboardClient() {
             <Badge variant="secondary">1,000 bundled ideas</Badge>
           </div>
           <div className="mt-6 max-w-2xl space-y-4">
-            <h1 className="text-3xl font-bold leading-tight sm:text-5xl">Safe kosher meal ideas without paying for AI.</h1>
+            <h1 className="text-3xl font-bold leading-tight sm:text-5xl">Kosher meal ideas for two, ready to shop.</h1>
             <p className="text-base leading-7 text-muted-foreground sm:text-lg">
-              Browse a built-in catalog around her fixed kosher, nightshade-free, tomato-free allergy rules.
+              Browse nightshade-free, tomato-free recipes with quick ordering links for Walmart, Wegmans, and kosher meat sources.
             </p>
           </div>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -66,10 +66,10 @@ export function DashboardClient() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ChefHat className="size-5 text-primary" />
-              Fixed Safety Catalog
+              Safe Shopping Catalog
             </CardTitle>
             <CardDescription>
-              One strict safety profile, deterministic ingredient blocking, and a local recipe bank ready for mobile testing.
+              Strict kosher rules, deterministic ingredient blocking, meals for two, and local recipe data ready for mobile testing.
             </CardDescription>
           </CardHeader>
         </Card>

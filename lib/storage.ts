@@ -3,8 +3,10 @@
 import { RECIPE_IMAGE_PLACEHOLDERS, STORAGE_KEYS } from "@/lib/constants";
 import { findCatalogRecipeById } from "@/lib/catalog";
 import {
+  finderSearchSchema,
   recipeRecordSchema,
   savedRecipeSchema,
+  type FinderSearch,
   type Recipe,
   type RecipeRecord,
   type SavedRecipe
@@ -18,6 +20,8 @@ const CLIENT_AI_LIMIT = {
   maxRequests: 5,
   windowMs: 10 * 60 * 1000
 };
+
+const MAX_RECENT_SEARCHES = 8;
 
 function isBrowser() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -95,6 +99,48 @@ export function removeSavedRecipe(id: string) {
 
 export function findRecipeById(id: string): RecipeRecord | SavedRecipe | undefined {
   return [...loadSavedRecipes(), ...loadGeneratedRecipes()].find((record) => record.id === id) ?? findCatalogRecipeById(id);
+}
+
+function parseFinderSearch(value: unknown): FinderSearch | undefined {
+  const parsed = finderSearchSchema.safeParse(value);
+  return parsed.success ? parsed.data : undefined;
+}
+
+function finderSearchKey(search: FinderSearch) {
+  return JSON.stringify({
+    recipeName: search.recipeName.trim().toLowerCase(),
+    occasion: search.occasion.trim().toLowerCase(),
+    cuisinePreference: search.cuisinePreference.trim().toLowerCase(),
+    mainIngredient: search.mainIngredient.trim().toLowerCase(),
+    availableIngredients: search.availableIngredients.trim().toLowerCase(),
+    servings: Number(search.servings),
+    extraNotes: search.extraNotes.trim().toLowerCase(),
+    kosherForPassover: search.kosherForPassover,
+    maxCaloriesPerServing: search.maxCaloriesPerServing,
+    maxTotalTimeMinutes: search.maxTotalTimeMinutes
+  });
+}
+
+export function loadFinderDraft(): FinderSearch | undefined {
+  return parseFinderSearch(readJson<unknown>(STORAGE_KEYS.finderDraft, undefined));
+}
+
+export function saveFinderDraft(search: FinderSearch) {
+  writeJson(STORAGE_KEYS.finderDraft, finderSearchSchema.parse(search));
+}
+
+export function loadRecentSearches(): FinderSearch[] {
+  const searches = readJson<unknown[]>(STORAGE_KEYS.recentSearches, []);
+  return searches.flatMap((search) => {
+    const parsed = parseFinderSearch(search);
+    return parsed ? [parsed] : [];
+  });
+}
+
+export function saveRecentSearch(search: FinderSearch) {
+  const parsed = finderSearchSchema.parse(search);
+  const next = [parsed, ...loadRecentSearches().filter((recent) => finderSearchKey(recent) !== finderSearchKey(parsed))].slice(0, MAX_RECENT_SEARCHES);
+  writeJson(STORAGE_KEYS.recentSearches, next);
 }
 
 export function checkClientAiRateLimit(now = Date.now()) {

@@ -1,28 +1,41 @@
 import { describe, expect, it } from "vitest";
-import { FIXED_SAFETY_PROFILE, createDefaultProfile, generationRequestSchema, recipeSchema } from "@/lib/schemas";
+import { FIXED_SAFETY_PROFILE, createDefaultProfile, finderSearchSchema, generationRequestSchema, recipeSchema } from "@/lib/schemas";
 
 describe("schemas", () => {
-  it("creates a restrictive default profile", () => {
+  it("creates the fixed nightshade and tomato safety profile", () => {
     const profile = createDefaultProfile();
     expect(profile.kosherPreference).toBe("strict");
-    expect(profile.allergies).toContain("nightshades");
-    expect(profile.allergies).toContain("tomatoes");
-    expect(profile.allergies).toContain("shellfish");
+    expect(profile.allergies).toEqual(["nightshades", "tomatoes"]);
   });
 
-  it("validates the required recipe JSON shape", () => {
+  it("validates the recipe shape with optional nutrition and shopping metadata", () => {
     const recipe = recipeSchema.parse({
       title: "Safe Pilaf",
       kosherType: "parve",
-      ingredients: [{ name: "Quinoa (parve)", quantity: "1", unit: "cup" }],
+      ingredients: [
+        {
+          name: "Quinoa (parve)",
+          quantity: "1",
+          unit: "cup",
+          shoppingName: "quinoa",
+          preferredStores: ["walmart", "wegmans", "kosh", "grow-and-behold", "kol-foods"],
+          shoppingUrlOverrides: {
+            kosh: "https://www.kosh.com/kosher-for-passover.html"
+          }
+        }
+      ],
       instructions: ["Cook quinoa."],
       prepTimeMinutes: 5,
       cookTimeMinutes: 20,
       servings: 4,
+      estimatedCaloriesPerServing: 320,
       notes: "Safe."
     });
 
     expect(recipe.title).toBe("Safe Pilaf");
+    expect(recipe.estimatedCaloriesPerServing).toBe(320);
+    expect(recipe.ingredients[0]?.shoppingName).toBe("quinoa");
+    expect(recipe.ingredients[0]?.shoppingUrlOverrides?.kosh).toBe("https://www.kosh.com/kosher-for-passover.html");
   });
 
   it("accepts ingredients on hand in generation requests", () => {
@@ -31,7 +44,28 @@ describe("schemas", () => {
     });
 
     expect(request.availableIngredients).toBe("carrots, onions, quinoa");
+    expect(request.servings).toBe(2);
+    expect(request.kosherForPassover).toBe(false);
     expect(request.profile).toEqual(FIXED_SAFETY_PROFILE);
+  });
+
+  it("accepts kosher for Passover finder requests", () => {
+    const request = generationRequestSchema.parse({
+      kosherForPassover: true,
+      maxCaloriesPerServing: 500,
+      maxTotalTimeMinutes: 45
+    });
+
+    expect(request.kosherForPassover).toBe(true);
+    expect(request.maxCaloriesPerServing).toBe(500);
+    expect(request.maxTotalTimeMinutes).toBe(45);
+  });
+
+  it("defaults finder calorie and time filters to unset", () => {
+    const search = finderSearchSchema.parse({});
+
+    expect(search.maxCaloriesPerServing).toBeUndefined();
+    expect(search.maxTotalTimeMinutes).toBeUndefined();
   });
 
   it("rejects oversized ingredients on hand text", () => {
@@ -40,5 +74,12 @@ describe("schemas", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid calorie and time limits", () => {
+    expect(generationRequestSchema.safeParse({ maxCaloriesPerServing: -1 }).success).toBe(false);
+    expect(generationRequestSchema.safeParse({ maxTotalTimeMinutes: 0 }).success).toBe(false);
+    expect(generationRequestSchema.safeParse({ maxCaloriesPerServing: 3001 }).success).toBe(false);
+    expect(generationRequestSchema.safeParse({ maxTotalTimeMinutes: 1441 }).success).toBe(false);
   });
 });

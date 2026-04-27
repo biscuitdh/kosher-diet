@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     default: APP_NAME,
     template: `%s | ${APP_NAME}`
   },
-  description: "Kosher, allergy-aware meal planning with nightshade and tomato-safe recipe generation.",
+  description: "Kosher, nightshade-free, tomato-free meal planning with local recipe search and shopping links.",
   applicationName: APP_NAME
 };
 

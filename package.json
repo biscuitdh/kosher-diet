@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:lan": "next dev --hostname 0.0.0.0 --port 3000",
     "build": "next build",
     "build:github": "NEXT_OUTPUT_EXPORT=true NEXT_PUBLIC_BASE_PATH=/kosher-diet next build",
+    "images:recipes": "node scripts/generate-recipe-images.mjs",
+    "images:check": "node scripts/check-recipe-images.mjs",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

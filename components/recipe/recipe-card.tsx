@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, ShieldCheck, UsersRound } from "lucide-react";
+import { Clock, Flame, ShieldCheck, UsersRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { withBasePath } from "@/lib/assets";
@@ -43,6 +43,12 @@ export function RecipeCard({ record }: RecipeCardProps) {
               <UsersRound className="size-3.5" />
               {record.recipe.servings} servings
             </span>
+            {record.recipe.estimatedCaloriesPerServing ? (
+              <span className="inline-flex items-center gap-1">
+                <Flame className="size-3.5" />
+                ~{record.recipe.estimatedCaloriesPerServing} cal
+              </span>
+            ) : null}
           </div>
         </CardContent>
       </Card>

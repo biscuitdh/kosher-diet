@@ -18,10 +18,14 @@ export function buildRecipeUserPrompt(input: GenerationRequest, retryContext?: s
     `Allowed meal types: ${allowedMealTypes}.`,
     `Additional allergies selected by user: ${selectedAllergies.join(", ") || "none"}.`,
     `Custom allergy notes: ${profile.customAllergies || "none"}.`,
+    `Requested recipe name or style: ${input.recipeName || "none"}.`,
     `Occasion: ${input.surpriseMe ? "Surprise me with something fitting" : input.occasion}.`,
     `Cuisine preference: ${input.surpriseMe ? "Surprise me" : input.cuisinePreference}.`,
     `Main protein or vegetable: ${input.surpriseMe ? "Surprise me" : input.mainIngredient}.`,
     `Ingredients on hand or requested inclusions: ${input.availableIngredients || "none"}. Use these only when safe and compatible; never override kosher, allergy, nightshade, or tomato restrictions.`,
+    input.kosherForPassover
+      ? "Kosher for Passover: yes. Use strict no-kitniyot Passover rules: no chametz and no rice, corn, beans, lentils, chickpeas, soy, tofu, sesame, tahini, mustard, buckwheat, caraway, cardamom, fennel seeds, peas, or similar kitniyot."
+      : "Kosher for Passover: no.",
     `Servings: ${input.servings}.`,
     `Extra notes: ${input.extraNotes || "none"}.`,
     "Use only ingredients that are safe under the system prompt and the fixed safety profile.",

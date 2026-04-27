@@ -31,17 +31,7 @@ export const ALLERGY_OPTIONS = [
 
 export type AllergyId = (typeof ALLERGY_OPTIONS)[number]["id"];
 
-export const DEFAULT_ALLERGIES: AllergyId[] = [
-  "nightshades",
-  "tomatoes",
-  "nuts",
-  "dairy",
-  "gluten",
-  "soy",
-  "eggs",
-  "fish",
-  "shellfish"
-];
+export const DEFAULT_ALLERGIES: AllergyId[] = ["nightshades", "tomatoes"];
 
 export const DEFAULT_MEAL_TYPES: MealType[] = ["meat", "dairy", "parve"];
 
@@ -67,10 +57,29 @@ export const FIXED_SAFETY_PROFILE: UserProfile = profileSchema.parse({
   mealTypes: DEFAULT_MEAL_TYPES
 });
 
+export const shoppingStoreSchema = z.enum(["walmart", "wegmans", "kosh", "grow-and-behold", "kol-foods", "specialty-kosher"]);
+export type ShoppingStore = z.infer<typeof shoppingStoreSchema>;
+
+export const shoppingUrlOverridesSchema = z
+  .object({
+    walmart: z.string().url().optional(),
+    wegmans: z.string().url().optional(),
+    kosh: z.string().url().optional(),
+    "grow-and-behold": z.string().url().optional(),
+    "kol-foods": z.string().url().optional(),
+    "specialty-kosher": z.string().url().optional()
+  })
+  .partial();
+
 export const ingredientSchema = z.object({
   name: z.string().trim().min(1).max(160),
   quantity: z.string().trim().min(1).max(80),
-  unit: z.string().trim().max(40).default("")
+  unit: z.string().trim().max(40).default(""),
+  shoppingName: z.string().trim().min(1).max(140).optional(),
+  pantryStaple: z.boolean().optional(),
+  preferredStores: z.array(shoppingStoreSchema).max(6).optional(),
+  shoppingUrlOverrides: shoppingUrlOverridesSchema.optional(),
+  substitutionNote: z.string().trim().max(300).optional()
 });
 export type RecipeIngredient = z.infer<typeof ingredientSchema>;
 
@@ -82,22 +91,41 @@ export const recipeSchema = z.object({
   prepTimeMinutes: z.coerce.number().int().min(0).max(1440),
   cookTimeMinutes: z.coerce.number().int().min(0).max(1440),
   servings: z.coerce.number().int().min(1).max(100),
+  estimatedCaloriesPerServing: z.coerce.number().int().min(0).max(3000).optional(),
   notes: z.string().trim().max(1500).default("")
 });
 export type Recipe = z.infer<typeof recipeSchema>;
 
 export const generationRequestSchema = z.object({
   profile: profileSchema.optional().default(FIXED_SAFETY_PROFILE),
+  recipeName: z.string().trim().max(120).optional().default(""),
   occasion: z.string().trim().max(120).optional().default("Weeknight dinner"),
   cuisinePreference: z.string().trim().max(120).optional().default("Chef's choice"),
   mainIngredient: z.string().trim().max(120).optional().default("Seasonal vegetables"),
   availableIngredients: z.string().trim().max(500).optional().default(""),
-  servings: z.coerce.number().int().min(1).max(24).default(4),
+  servings: z.coerce.number().int().min(1).max(24).default(2),
   extraNotes: z.string().trim().max(1000).optional().default(""),
+  kosherForPassover: z.boolean().optional().default(false),
+  maxCaloriesPerServing: z.coerce.number().int().min(1).max(3000).optional(),
+  maxTotalTimeMinutes: z.coerce.number().int().min(1).max(1440).optional(),
   surpriseMe: z.boolean().optional().default(false),
   variationOf: recipeSchema.optional()
 });
 export type GenerationRequest = z.infer<typeof generationRequestSchema>;
+
+export const finderSearchSchema = z.object({
+  recipeName: z.string().trim().max(120).default(""),
+  occasion: z.string().trim().max(120).default("Weeknight dinner"),
+  cuisinePreference: z.string().trim().max(120).default("Mediterranean"),
+  mainIngredient: z.string().trim().max(120).default("chicken, salmon, eggs, or seasonal vegetables"),
+  availableIngredients: z.string().trim().max(500).default(""),
+  servings: z.coerce.number().int().min(1).max(24).default(2),
+  extraNotes: z.string().trim().max(1000).default(""),
+  kosherForPassover: z.boolean().default(false),
+  maxCaloriesPerServing: z.coerce.number().int().min(1).max(3000).optional(),
+  maxTotalTimeMinutes: z.coerce.number().int().min(1).max(1440).optional()
+});
+export type FinderSearch = z.infer<typeof finderSearchSchema>;
 
 export const savedRecipeSchema = z.object({
   id: z.string().min(1),

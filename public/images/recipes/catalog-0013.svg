@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 675" role="img" aria-label="Kosher recipe fallback 0013">
+  <rect width="900" height="675" fill="#f6efe2"/>
+  <ellipse cx="450" cy="365" rx="290" ry="190" fill="#fff8ec"/>
+  <ellipse cx="450" cy="365" rx="225" ry="132" fill="#f8f1e3"/>
+  <ellipse cx="372" cy="312" rx="92" ry="58" fill="#a94e34"/>
+  <ellipse cx="520" cy="330" rx="112" ry="66" fill="#23443b"/>
+  <ellipse cx="430" cy="420" rx="180" ry="58" fill="#e0a84f" opacity=".85"/>
+  <g fill="#5f8d61">
+    <ellipse cx="310" cy="250" rx="38" ry="12" transform="rotate(-22 310 250)"/>
+    <ellipse cx="500" cy="252" rx="33" ry="11" transform="rotate(18 500 252)"/>
+    <ellipse cx="590" cy="440" rx="31" ry="10" transform="rotate(-14 590 440)"/>
+  </g>
+</svg>

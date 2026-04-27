@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, Clock, RefreshCw, Save, ShieldCheck, UsersRound } from "lucide-react";
+import { ArrowLeft, Check, Clock, Copy, ExternalLink, Flame, RefreshCw, Save, ShieldCheck, ShoppingCart, UsersRound } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { withBasePath } from "@/lib/assets";
 import { findRecipeById, loadSavedRecipes, removeSavedRecipe, upsertSavedRecipe } from "@/lib/storage";
 import type { RecipeRecord, SavedRecipe } from "@/lib/schemas";
+import { formatIngredientForCopy, shoppingLinksForIngredient } from "@/lib/shopping";
 import { formatMinutes, titleCase } from "@/lib/utils";
 
 type RecipeDetailClientProps = {
@@ -23,6 +24,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
   const [isSaved, setIsSaved] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [copiedItem, setCopiedItem] = useState("");
 
   useEffect(() => {
     const found = findRecipeById(id);
@@ -63,6 +65,16 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
     setIsSaved(true);
   }
 
+  async function copyText(text: string, copiedLabel: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedItem(copiedLabel);
+      window.setTimeout(() => setCopiedItem(""), 1800);
+    } catch {
+      setCopiedItem("");
+    }
+  }
+
   if (loaded && !record) {
     return (
       <Card className="mx-auto max-w-xl">
@@ -82,6 +94,10 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
   if (!record) {
     return null;
   }
+
+  const shoppingIngredients = record.recipe.ingredients.filter((ingredient) => !ingredient.pantryStaple);
+  const pantryIngredients = record.recipe.ingredients.filter((ingredient) => ingredient.pantryStaple);
+  const ingredientListText = record.recipe.ingredients.map(formatIngredientForCopy).join("\n");
 
   return (
     <article className="mx-auto max-w-6xl space-y-6">
@@ -113,7 +129,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
             <p className="text-base leading-7 text-muted-foreground">{record.recipe.notes}</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 text-sm">
+          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
             <div className="rounded-lg border bg-card p-3">
               <Clock className="mb-2 size-4 text-primary" />
               <p className="font-semibold">{formatMinutes(totalTime)}</p>
@@ -123,6 +139,13 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
               <UsersRound className="mb-2 size-4 text-primary" />
               <p className="font-semibold">{record.recipe.servings}</p>
               <p className="text-muted-foreground">Servings</p>
+            </div>
+            <div className="rounded-lg border bg-card p-3">
+              <Flame className="mb-2 size-4 text-primary" />
+              <p className="font-semibold">
+                {record.recipe.estimatedCaloriesPerServing ? `~${record.recipe.estimatedCaloriesPerServing}` : "n/a"}
+              </p>
+              <p className="text-muted-foreground">Cal/serving</p>
             </div>
             <div className="rounded-lg border bg-card p-3">
               <Check className="mb-2 size-4 text-primary" />
@@ -149,9 +172,64 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
       <Alert variant="safe">
         <AlertTitle>Safety check passed</AlertTitle>
         <AlertDescription>
-          This recipe was validated against the nightshade, tomato, kosher, non-kosher fish, shellfish, and selected allergy blocklists.
+          This recipe was validated against nightshade, tomato, kosher, shellfish, pork, and non-kosher fish restrictions.
         </AlertDescription>
       </Alert>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShoppingCart className="size-5 text-primary" />
+            Shopping
+          </CardTitle>
+          <CardDescription>Open quick searches for anything you do not have locally.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button type="button" variant="outline" onClick={() => copyText(ingredientListText, "full-list")}>
+            <Copy />
+            {copiedItem === "full-list" ? "Copied list" : "Copy full list"}
+          </Button>
+
+          <div className="space-y-3">
+            {shoppingIngredients.map((ingredient, index) => {
+              const links = shoppingLinksForIngredient(ingredient);
+              const copyLabel = `ingredient-${index}`;
+
+              return (
+                <div key={`${ingredient.name}-shopping-${index}`} className="rounded-lg border bg-background p-3">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-1">
+                      <p className="font-medium">{formatIngredientForCopy(ingredient)}</p>
+                      {ingredient.substitutionNote ? <p className="text-xs text-muted-foreground">{ingredient.substitutionNote}</p> : null}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {links.map((link) => (
+                        <Button key={`${ingredient.name}-${link.store}`} asChild variant="outline" size="sm">
+                          <a href={link.href} target="_blank" rel="noreferrer">
+                            {link.label}
+                            <ExternalLink />
+                          </a>
+                        </Button>
+                      ))}
+                      <Button type="button" variant="secondary" size="sm" onClick={() => copyText(formatIngredientForCopy(ingredient), copyLabel)}>
+                        <Copy />
+                        {copiedItem === copyLabel ? "Copied" : "Copy"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {pantryIngredients.length > 0 ? (
+            <div className="rounded-lg border bg-secondary/45 p-3 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">Likely pantry staples</p>
+              <p>{pantryIngredients.map(formatIngredientForCopy).join(", ")}</p>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
 
       <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <Card>

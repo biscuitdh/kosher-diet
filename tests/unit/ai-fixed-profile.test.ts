@@ -6,10 +6,10 @@ vi.mock("@/lib/ai/provider", () => ({
   callRecipeProvider: vi.fn(async () => ({
     provider: "test",
     rawText: JSON.stringify({
-      title: "Egg Scramble",
+      title: "Tomato Scramble",
       kosherType: "parve",
-      ingredients: [{ name: "Eggs (parve)", quantity: "2", unit: "large" }],
-      instructions: ["Cook the eggs."],
+      ingredients: [{ name: "Tomato paste (parve)", quantity: "2", unit: "tbsp" }],
+      instructions: ["Warm the tomato paste."],
       prepTimeMinutes: 2,
       cookTimeMinutes: 5,
       servings: 1,
@@ -30,7 +30,7 @@ describe("fixed safety profile enforcement", () => {
       profile: weakClientProfile,
       occasion: "Breakfast",
       cuisinePreference: "Any",
-      mainIngredient: "eggs",
+      mainIngredient: "tomatoes",
       servings: 1,
       extraNotes: "",
       surpriseMe: false
