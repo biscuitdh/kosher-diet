@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { ChefHat, Plus, ShieldCheck, Sparkles } from "lucide-react";
+import { ChefHat, Plus, Sparkles } from "lucide-react";
 import { RecipeCard } from "@/components/recipe/recipe-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,10 +37,6 @@ export function DashboardClient() {
       <section className="grid items-stretch gap-5 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="rounded-lg border bg-card p-5 shadow-soft sm:p-8">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="safe">
-              <ShieldCheck className="mr-1 size-3.5" />
-              Nightshade & Tomato Safe ✅
-            </Badge>
             <Badge variant="secondary">1,000 bundled ideas</Badge>
           </div>
           <div className="mt-6 max-w-2xl space-y-4">
@@ -80,7 +76,7 @@ export function DashboardClient() {
           <div>
             <h2 className="text-2xl font-semibold tracking-normal">{showingCatalog ? "Recipe catalog" : "Saved recipes"}</h2>
             <p className="text-sm text-muted-foreground">
-              {showingCatalog ? "A starter set of safe meal ideas is ready before anything is saved." : "Cards include kosher type, safety badge, and meal timing."}
+              {showingCatalog ? "A starter set of meal ideas is ready before anything is saved." : "Cards include kosher type, calories, and meal timing."}
             </p>
           </div>
           <Button asChild variant="outline">

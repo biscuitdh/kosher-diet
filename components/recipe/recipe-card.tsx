@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, Flame, ShieldCheck, UsersRound } from "lucide-react";
+import { Clock, Flame, UsersRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { withBasePath } from "@/lib/assets";
@@ -27,10 +27,6 @@ export function RecipeCard({ record }: RecipeCardProps) {
           <div className="space-y-2">
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">{titleCase(record.recipe.kosherType)}</Badge>
-              <Badge variant="safe">
-                <ShieldCheck className="mr-1 size-3.5" />
-                Allergy-safe
-              </Badge>
             </div>
             <h3 className="line-clamp-2 text-base font-semibold leading-snug">{record.recipe.title}</h3>
           </div>

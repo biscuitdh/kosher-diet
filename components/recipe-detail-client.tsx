@@ -3,8 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, Clock, Copy, ExternalLink, Flame, RefreshCw, Save, ShieldCheck, ShoppingCart, UsersRound } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ArrowLeft, Check, Clock, Copy, ExternalLink, Flame, RefreshCw, Save, ShoppingCart, UsersRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,10 +116,6 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
 
         <div className="space-y-5">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="safe">
-              <ShieldCheck className="mr-1 size-3.5" />
-              Nightshade & Tomato Safe ✅
-            </Badge>
             <Badge variant="secondary">{titleCase(record.recipe.kosherType)}</Badge>
           </div>
 
@@ -168,13 +163,6 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
           </div>
         </div>
       </section>
-
-      <Alert variant="safe">
-        <AlertTitle>Safety check passed</AlertTitle>
-        <AlertDescription>
-          This recipe was validated against nightshade, tomato, kosher, shellfish, pork, and non-kosher fish restrictions.
-        </AlertDescription>
-      </Alert>
 
       <Card>
         <CardHeader>
