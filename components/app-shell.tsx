@@ -12,12 +12,12 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/find", label: "Find", icon: Sparkles }
+  { href: "/generate", label: "Find", icon: Sparkles }
 ];
 
 function isActiveNav(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  return pathname.startsWith(href) || (href === "/find" && pathname.startsWith("/generate"));
+  return pathname.startsWith(href) || (href === "/generate" && pathname.startsWith("/find"));
 }
 
 function HeaderRecipeSearch() {

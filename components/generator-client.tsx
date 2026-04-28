@@ -234,6 +234,34 @@ function RecipeMatchCard({
   );
 }
 
+function FlowTabs({ active, findHref, browseHref }: { active: "find" | "browse"; findHref: string; browseHref: string }) {
+  const tabs = [
+    { id: "find", label: "Find", href: findHref },
+    { id: "browse", label: "Browse", href: browseHref }
+  ] as const;
+
+  return (
+    <nav className="flex w-full rounded-lg border bg-background/70 p-1" aria-label="Recipe flow">
+      {tabs.map((tab) => {
+        const isActive = tab.id === active;
+        return (
+          <Link
+            key={tab.id}
+            href={tab.href}
+            aria-current={isActive ? "page" : undefined}
+            className={cn(
+              "flex min-h-10 flex-1 items-center justify-center rounded-md px-3 text-sm font-semibold transition-colors focus-ring",
+              isActive ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
+            )}
+          >
+            {tab.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 type GeneratorClientProps = {
   mode?: "brief" | "matches";
 };
@@ -447,18 +475,21 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
     openFind(nextSearch);
   }
 
+  const flowTabs = <FlowTabs active={mode === "matches" ? "browse" : "find"} findHref={finderHref("/generate", finderSearch)} browseHref={finderHref("/find", finderSearch)} />;
+
   const matchesSection = (
     <section className="space-y-4">
+      {flowTabs}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Recipe matches</h1>
+          <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Browse</h1>
           <p className="text-muted-foreground">Search nightshade-free, tomato-free kosher meals for two from the bundled catalog.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
             <Link href={finderHref("/generate", finderSearch)}>
               <Sparkles />
-              Recipe Brief
+              Find
             </Link>
           </Button>
           <Button type="button" variant="outline" onClick={refreshMatches}>
@@ -470,7 +501,7 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Find</CardTitle>
+          <CardTitle>Browse</CardTitle>
           <CardDescription>{recipeMatches.length} clickable matches from the local catalog.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -540,15 +571,16 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      {flowTabs}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Recipe brief</h1>
+        <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Find</h1>
         <p className="text-muted-foreground">Set the meal constraints before opening matching catalog recipes.</p>
       </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="size-5 text-primary" />
-            Recipe brief
+            Find
           </CardTitle>
           <CardDescription>Be specific when you care. Use Surprise Me when you do not. Both are valid adult strategies.</CardDescription>
         </CardHeader>

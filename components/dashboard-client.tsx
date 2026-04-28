@@ -56,7 +56,7 @@ export function DashboardClient() {
           </div>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg">
-              <Link href="/find">
+              <Link href="/generate">
                 <Sparkles />
                 Find Meal Ideas
               </Link>
@@ -91,7 +91,7 @@ export function DashboardClient() {
           <Button asChild variant="outline">
             <Link href="/generate">
               <Plus />
-              Recipe Brief
+              Find
             </Link>
           </Button>
         </div>
@@ -117,7 +117,7 @@ export function DashboardClient() {
                 </p>
               </div>
               <Button asChild>
-                <Link href="/find">Find Meal Ideas</Link>
+                <Link href="/generate">Find Meal Ideas</Link>
               </Button>
             </CardContent>
           </Card>

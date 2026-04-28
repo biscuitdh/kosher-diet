@@ -4,7 +4,7 @@ import { GeneratorClient } from "@/components/generator-client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = {
-  title: "Find Recipes"
+  title: "Browse Recipes"
 };
 
 export default function FindPage() {
