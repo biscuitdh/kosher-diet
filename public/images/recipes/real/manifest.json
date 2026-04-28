@@ -2,7 +2,7 @@
   "generatedAt": "2026-04-27T00:00:00.000Z",
   "format": "svg",
   "assetCount": 112,
-  "sourcePolicy": "local generated/AI-ready dish assets first, sourced photos as reviewed fallback, no hotlinked images",
+  "sourcePolicy": "external raster imports under /images/recipes/ai are preferred, SVGs are placeholders, sourced photos are reviewed fallback, no hotlinked images",
   "researchReferences": [
     {
       "label": "Pexels License",
@@ -147,7 +147,10 @@
     },
     {
       "key": "walleye-passover-01-lemon-dill-matzo-farfel",
-      "path": "/images/recipes/ai/walleye-passover-01-lemon-dill-matzo-farfel.svg",
+      "path": "/images/recipes/ai/walleye-passover-01-lemon-dill-matzo-farfel.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-passover-01-lemon-dill-matzo-farfel.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-passover-01-lemon-dill-matzo-farfel.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -177,7 +180,10 @@
     },
     {
       "key": "walleye-passover-02-parsley-quinoa-carrots",
-      "path": "/images/recipes/ai/walleye-passover-02-parsley-quinoa-carrots.svg",
+      "path": "/images/recipes/ai/walleye-passover-02-parsley-quinoa-carrots.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-passover-02-parsley-quinoa-carrots.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-passover-02-parsley-quinoa-carrots.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -207,7 +213,10 @@
     },
     {
       "key": "walleye-passover-03-garlic-cauliflower-crumble",
-      "path": "/images/recipes/ai/walleye-passover-03-garlic-cauliflower-crumble.svg",
+      "path": "/images/recipes/ai/walleye-passover-03-garlic-cauliflower-crumble.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-passover-03-garlic-cauliflower-crumble.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-passover-03-garlic-cauliflower-crumble.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -237,7 +246,10 @@
     },
     {
       "key": "walleye-passover-04-ginger-carrots-zucchini",
-      "path": "/images/recipes/ai/walleye-passover-04-ginger-carrots-zucchini.svg",
+      "path": "/images/recipes/ai/walleye-passover-04-ginger-carrots-zucchini.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-passover-04-ginger-carrots-zucchini.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-passover-04-ginger-carrots-zucchini.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -267,7 +279,10 @@
     },
     {
       "key": "walleye-passover-05-cumin-coriander-quinoa",
-      "path": "/images/recipes/ai/walleye-passover-05-cumin-coriander-quinoa.svg",
+      "path": "/images/recipes/ai/walleye-passover-05-cumin-coriander-quinoa.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-passover-05-cumin-coriander-quinoa.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-passover-05-cumin-coriander-quinoa.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -297,7 +312,10 @@
     },
     {
       "key": "walleye-passover-06-rosemary-cauliflower-herbs",
-      "path": "/images/recipes/ai/walleye-passover-06-rosemary-cauliflower-herbs.svg",
+      "path": "/images/recipes/ai/walleye-passover-06-rosemary-cauliflower-herbs.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-passover-06-rosemary-cauliflower-herbs.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-passover-06-rosemary-cauliflower-herbs.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -327,7 +345,10 @@
     },
     {
       "key": "walleye-passover-07-lemon-dill-matzo-farfel",
-      "path": "/images/recipes/ai/walleye-passover-07-lemon-dill-matzo-farfel.svg",
+      "path": "/images/recipes/ai/walleye-passover-07-lemon-dill-matzo-farfel.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-passover-07-lemon-dill-matzo-farfel.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-passover-07-lemon-dill-matzo-farfel.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -357,7 +378,10 @@
     },
     {
       "key": "walleye-passover-08-parsley-quinoa-carrots",
-      "path": "/images/recipes/ai/walleye-passover-08-parsley-quinoa-carrots.svg",
+      "path": "/images/recipes/ai/walleye-passover-08-parsley-quinoa-carrots.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-passover-08-parsley-quinoa-carrots.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-passover-08-parsley-quinoa-carrots.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -388,6 +412,9 @@
     {
       "key": "walleye-passover-09-garlic-cauliflower-crumble",
       "path": "/images/recipes/real/walleye-passover-09-garlic-cauliflower-crumble.svg",
+      "placeholderPath": "/images/recipes/real/walleye-passover-09-garlic-cauliflower-crumble.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -418,6 +445,9 @@
     {
       "key": "walleye-passover-10-ginger-carrots-zucchini",
       "path": "/images/recipes/real/walleye-passover-10-ginger-carrots-zucchini.svg",
+      "placeholderPath": "/images/recipes/real/walleye-passover-10-ginger-carrots-zucchini.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -448,6 +478,9 @@
     {
       "key": "walleye-passover-11-cumin-coriander-quinoa",
       "path": "/images/recipes/real/walleye-passover-11-cumin-coriander-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/walleye-passover-11-cumin-coriander-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -478,6 +511,9 @@
     {
       "key": "walleye-passover-12-rosemary-cauliflower-herbs",
       "path": "/images/recipes/real/walleye-passover-12-rosemary-cauliflower-herbs.svg",
+      "placeholderPath": "/images/recipes/real/walleye-passover-12-rosemary-cauliflower-herbs.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -507,7 +543,10 @@
     },
     {
       "key": "walleye-weeknight-01-lemon-rice",
-      "path": "/images/recipes/ai/walleye-weeknight-01-lemon-rice.svg",
+      "path": "/images/recipes/ai/walleye-weeknight-01-lemon-rice.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-weeknight-01-lemon-rice.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-weeknight-01-lemon-rice.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -537,7 +576,10 @@
     },
     {
       "key": "walleye-weeknight-02-dill-quinoa",
-      "path": "/images/recipes/ai/walleye-weeknight-02-dill-quinoa.svg",
+      "path": "/images/recipes/ai/walleye-weeknight-02-dill-quinoa.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-weeknight-02-dill-quinoa.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-weeknight-02-dill-quinoa.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -567,7 +609,10 @@
     },
     {
       "key": "walleye-weeknight-03-sumac-couscous",
-      "path": "/images/recipes/ai/walleye-weeknight-03-sumac-couscous.svg",
+      "path": "/images/recipes/ai/walleye-weeknight-03-sumac-couscous.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-weeknight-03-sumac-couscous.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-weeknight-03-sumac-couscous.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -597,7 +642,10 @@
     },
     {
       "key": "walleye-weeknight-04-mint-greens",
-      "path": "/images/recipes/ai/walleye-weeknight-04-mint-greens.svg",
+      "path": "/images/recipes/ai/walleye-weeknight-04-mint-greens.webp",
+      "placeholderPath": "/images/recipes/ai/walleye-weeknight-04-mint-greens.svg",
+      "targetRasterPath": "/images/recipes/ai/walleye-weeknight-04-mint-greens.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -628,6 +676,9 @@
     {
       "key": "walleye-weeknight-05-garlic-pasta",
       "path": "/images/recipes/real/walleye-weeknight-05-garlic-pasta.svg",
+      "placeholderPath": "/images/recipes/real/walleye-weeknight-05-garlic-pasta.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -658,6 +709,9 @@
     {
       "key": "walleye-weeknight-06-lemon-rice",
       "path": "/images/recipes/real/walleye-weeknight-06-lemon-rice.svg",
+      "placeholderPath": "/images/recipes/real/walleye-weeknight-06-lemon-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -688,6 +742,9 @@
     {
       "key": "walleye-weeknight-07-dill-quinoa",
       "path": "/images/recipes/real/walleye-weeknight-07-dill-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/walleye-weeknight-07-dill-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -718,6 +775,9 @@
     {
       "key": "walleye-weeknight-08-sumac-couscous",
       "path": "/images/recipes/real/walleye-weeknight-08-sumac-couscous.svg",
+      "placeholderPath": "/images/recipes/real/walleye-weeknight-08-sumac-couscous.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -748,6 +808,9 @@
     {
       "key": "walleye-weeknight-09-mint-greens",
       "path": "/images/recipes/real/walleye-weeknight-09-mint-greens.svg",
+      "placeholderPath": "/images/recipes/real/walleye-weeknight-09-mint-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -778,6 +841,9 @@
     {
       "key": "walleye-weeknight-10-garlic-pasta",
       "path": "/images/recipes/real/walleye-weeknight-10-garlic-pasta.svg",
+      "placeholderPath": "/images/recipes/real/walleye-weeknight-10-garlic-pasta.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "walleye"
@@ -807,7 +873,10 @@
     },
     {
       "key": "salmon-01-lemon-quinoa",
-      "path": "/images/recipes/ai/salmon-01-lemon-quinoa.svg",
+      "path": "/images/recipes/ai/salmon-01-lemon-quinoa.webp",
+      "placeholderPath": "/images/recipes/ai/salmon-01-lemon-quinoa.svg",
+      "targetRasterPath": "/images/recipes/ai/salmon-01-lemon-quinoa.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "salmon"
@@ -835,7 +904,10 @@
     },
     {
       "key": "salmon-02-dill-carrots",
-      "path": "/images/recipes/ai/salmon-02-dill-carrots.svg",
+      "path": "/images/recipes/ai/salmon-02-dill-carrots.webp",
+      "placeholderPath": "/images/recipes/ai/salmon-02-dill-carrots.svg",
+      "targetRasterPath": "/images/recipes/ai/salmon-02-dill-carrots.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "salmon"
@@ -864,6 +936,9 @@
     {
       "key": "salmon-03-mint-greens",
       "path": "/images/recipes/real/salmon-03-mint-greens.svg",
+      "placeholderPath": "/images/recipes/real/salmon-03-mint-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "salmon"
@@ -892,6 +967,9 @@
     {
       "key": "salmon-04-oregano-rice",
       "path": "/images/recipes/real/salmon-04-oregano-rice.svg",
+      "placeholderPath": "/images/recipes/real/salmon-04-oregano-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "salmon"
@@ -920,6 +998,9 @@
     {
       "key": "salmon-05-lemon-quinoa",
       "path": "/images/recipes/real/salmon-05-lemon-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/salmon-05-lemon-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "salmon"
@@ -948,6 +1029,9 @@
     {
       "key": "salmon-06-dill-carrots",
       "path": "/images/recipes/real/salmon-06-dill-carrots.svg",
+      "placeholderPath": "/images/recipes/real/salmon-06-dill-carrots.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "salmon"
@@ -976,6 +1060,9 @@
     {
       "key": "salmon-07-mint-greens",
       "path": "/images/recipes/real/salmon-07-mint-greens.svg",
+      "placeholderPath": "/images/recipes/real/salmon-07-mint-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "salmon"
@@ -1004,6 +1091,9 @@
     {
       "key": "salmon-08-oregano-rice",
       "path": "/images/recipes/real/salmon-08-oregano-rice.svg",
+      "placeholderPath": "/images/recipes/real/salmon-08-oregano-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "salmon"
@@ -1031,7 +1121,10 @@
     },
     {
       "key": "white-fish-01-cod-lemon",
-      "path": "/images/recipes/ai/white-fish-01-cod-lemon.svg",
+      "path": "/images/recipes/ai/white-fish-01-cod-lemon.webp",
+      "placeholderPath": "/images/recipes/ai/white-fish-01-cod-lemon.svg",
+      "targetRasterPath": "/images/recipes/ai/white-fish-01-cod-lemon.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "cod",
@@ -1062,7 +1155,10 @@
     },
     {
       "key": "white-fish-02-trout-herbs",
-      "path": "/images/recipes/ai/white-fish-02-trout-herbs.svg",
+      "path": "/images/recipes/ai/white-fish-02-trout-herbs.webp",
+      "placeholderPath": "/images/recipes/ai/white-fish-02-trout-herbs.svg",
+      "targetRasterPath": "/images/recipes/ai/white-fish-02-trout-herbs.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "cod",
@@ -1094,6 +1190,9 @@
     {
       "key": "white-fish-03-tuna-greens",
       "path": "/images/recipes/real/white-fish-03-tuna-greens.svg",
+      "placeholderPath": "/images/recipes/real/white-fish-03-tuna-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "cod",
@@ -1125,6 +1224,9 @@
     {
       "key": "white-fish-04-cod-cauliflower",
       "path": "/images/recipes/real/white-fish-04-cod-cauliflower.svg",
+      "placeholderPath": "/images/recipes/real/white-fish-04-cod-cauliflower.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "cod",
@@ -1156,6 +1258,9 @@
     {
       "key": "white-fish-05-cod-lemon",
       "path": "/images/recipes/real/white-fish-05-cod-lemon.svg",
+      "placeholderPath": "/images/recipes/real/white-fish-05-cod-lemon.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "cod",
@@ -1187,6 +1292,9 @@
     {
       "key": "white-fish-06-trout-herbs",
       "path": "/images/recipes/real/white-fish-06-trout-herbs.svg",
+      "placeholderPath": "/images/recipes/real/white-fish-06-trout-herbs.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "cod",
@@ -1218,6 +1326,9 @@
     {
       "key": "white-fish-07-tuna-greens",
       "path": "/images/recipes/real/white-fish-07-tuna-greens.svg",
+      "placeholderPath": "/images/recipes/real/white-fish-07-tuna-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "cod",
@@ -1249,6 +1360,9 @@
     {
       "key": "white-fish-08-cod-cauliflower",
       "path": "/images/recipes/real/white-fish-08-cod-cauliflower.svg",
+      "placeholderPath": "/images/recipes/real/white-fish-08-cod-cauliflower.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "cod",
@@ -1279,7 +1393,10 @@
     },
     {
       "key": "chicken-thighs-01-lemon-quinoa",
-      "path": "/images/recipes/ai/chicken-thighs-01-lemon-quinoa.svg",
+      "path": "/images/recipes/ai/chicken-thighs-01-lemon-quinoa.webp",
+      "placeholderPath": "/images/recipes/ai/chicken-thighs-01-lemon-quinoa.svg",
+      "targetRasterPath": "/images/recipes/ai/chicken-thighs-01-lemon-quinoa.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "chicken thighs"
@@ -1308,7 +1425,10 @@
     },
     {
       "key": "chicken-thighs-02-rosemary-carrots",
-      "path": "/images/recipes/ai/chicken-thighs-02-rosemary-carrots.svg",
+      "path": "/images/recipes/ai/chicken-thighs-02-rosemary-carrots.webp",
+      "placeholderPath": "/images/recipes/ai/chicken-thighs-02-rosemary-carrots.svg",
+      "targetRasterPath": "/images/recipes/ai/chicken-thighs-02-rosemary-carrots.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "chicken thighs"
@@ -1338,6 +1458,9 @@
     {
       "key": "chicken-thighs-03-sumac-cauliflower",
       "path": "/images/recipes/real/chicken-thighs-03-sumac-cauliflower.svg",
+      "placeholderPath": "/images/recipes/real/chicken-thighs-03-sumac-cauliflower.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken thighs"
@@ -1367,6 +1490,9 @@
     {
       "key": "chicken-thighs-04-matzo-farfel",
       "path": "/images/recipes/real/chicken-thighs-04-matzo-farfel.svg",
+      "placeholderPath": "/images/recipes/real/chicken-thighs-04-matzo-farfel.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken thighs"
@@ -1396,6 +1522,9 @@
     {
       "key": "chicken-thighs-05-lemon-quinoa",
       "path": "/images/recipes/real/chicken-thighs-05-lemon-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/chicken-thighs-05-lemon-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken thighs"
@@ -1425,6 +1554,9 @@
     {
       "key": "chicken-thighs-06-rosemary-carrots",
       "path": "/images/recipes/real/chicken-thighs-06-rosemary-carrots.svg",
+      "placeholderPath": "/images/recipes/real/chicken-thighs-06-rosemary-carrots.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken thighs"
@@ -1454,6 +1586,9 @@
     {
       "key": "chicken-thighs-07-sumac-cauliflower",
       "path": "/images/recipes/real/chicken-thighs-07-sumac-cauliflower.svg",
+      "placeholderPath": "/images/recipes/real/chicken-thighs-07-sumac-cauliflower.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken thighs"
@@ -1483,6 +1618,9 @@
     {
       "key": "chicken-thighs-08-matzo-farfel",
       "path": "/images/recipes/real/chicken-thighs-08-matzo-farfel.svg",
+      "placeholderPath": "/images/recipes/real/chicken-thighs-08-matzo-farfel.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken thighs"
@@ -1511,7 +1649,10 @@
     },
     {
       "key": "chicken-breast-01-garlic-quinoa",
-      "path": "/images/recipes/ai/chicken-breast-01-garlic-quinoa.svg",
+      "path": "/images/recipes/ai/chicken-breast-01-garlic-quinoa.webp",
+      "placeholderPath": "/images/recipes/ai/chicken-breast-01-garlic-quinoa.svg",
+      "targetRasterPath": "/images/recipes/ai/chicken-breast-01-garlic-quinoa.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "chicken breast"
@@ -1539,6 +1680,9 @@
     {
       "key": "chicken-breast-02-thyme-carrots",
       "path": "/images/recipes/real/chicken-breast-02-thyme-carrots.svg",
+      "placeholderPath": "/images/recipes/real/chicken-breast-02-thyme-carrots.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken breast"
@@ -1566,6 +1710,9 @@
     {
       "key": "chicken-breast-03-parsley-greens",
       "path": "/images/recipes/real/chicken-breast-03-parsley-greens.svg",
+      "placeholderPath": "/images/recipes/real/chicken-breast-03-parsley-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken breast"
@@ -1593,6 +1740,9 @@
     {
       "key": "chicken-breast-04-garlic-quinoa",
       "path": "/images/recipes/real/chicken-breast-04-garlic-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/chicken-breast-04-garlic-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken breast"
@@ -1620,6 +1770,9 @@
     {
       "key": "chicken-breast-05-thyme-carrots",
       "path": "/images/recipes/real/chicken-breast-05-thyme-carrots.svg",
+      "placeholderPath": "/images/recipes/real/chicken-breast-05-thyme-carrots.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken breast"
@@ -1647,6 +1800,9 @@
     {
       "key": "chicken-breast-06-parsley-greens",
       "path": "/images/recipes/real/chicken-breast-06-parsley-greens.svg",
+      "placeholderPath": "/images/recipes/real/chicken-breast-06-parsley-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "chicken breast"
@@ -1673,7 +1829,10 @@
     },
     {
       "key": "beef-01-ground-beef-quinoa",
-      "path": "/images/recipes/ai/beef-01-ground-beef-quinoa.svg",
+      "path": "/images/recipes/ai/beef-01-ground-beef-quinoa.webp",
+      "placeholderPath": "/images/recipes/ai/beef-01-ground-beef-quinoa.svg",
+      "targetRasterPath": "/images/recipes/ai/beef-01-ground-beef-quinoa.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "ground beef",
@@ -1702,6 +1861,9 @@
     {
       "key": "beef-02-beef-stew-carrots",
       "path": "/images/recipes/real/beef-02-beef-stew-carrots.svg",
+      "placeholderPath": "/images/recipes/real/beef-02-beef-stew-carrots.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "ground beef",
@@ -1730,6 +1892,9 @@
     {
       "key": "beef-03-cumin-cauliflower",
       "path": "/images/recipes/real/beef-03-cumin-cauliflower.svg",
+      "placeholderPath": "/images/recipes/real/beef-03-cumin-cauliflower.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "ground beef",
@@ -1758,6 +1923,9 @@
     {
       "key": "beef-04-garlic-rice",
       "path": "/images/recipes/real/beef-04-garlic-rice.svg",
+      "placeholderPath": "/images/recipes/real/beef-04-garlic-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "ground beef",
@@ -1786,6 +1954,9 @@
     {
       "key": "beef-05-ground-beef-quinoa",
       "path": "/images/recipes/real/beef-05-ground-beef-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/beef-05-ground-beef-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "ground beef",
@@ -1814,6 +1985,9 @@
     {
       "key": "beef-06-beef-stew-carrots",
       "path": "/images/recipes/real/beef-06-beef-stew-carrots.svg",
+      "placeholderPath": "/images/recipes/real/beef-06-beef-stew-carrots.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "ground beef",
@@ -1842,6 +2016,9 @@
     {
       "key": "beef-07-cumin-cauliflower",
       "path": "/images/recipes/real/beef-07-cumin-cauliflower.svg",
+      "placeholderPath": "/images/recipes/real/beef-07-cumin-cauliflower.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "ground beef",
@@ -1870,6 +2047,9 @@
     {
       "key": "beef-08-garlic-rice",
       "path": "/images/recipes/real/beef-08-garlic-rice.svg",
+      "placeholderPath": "/images/recipes/real/beef-08-garlic-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "ground beef",
@@ -1898,6 +2078,9 @@
     {
       "key": "lamb-duck-01-lamb-mint",
       "path": "/images/recipes/real/lamb-duck-01-lamb-mint.svg",
+      "placeholderPath": "/images/recipes/real/lamb-duck-01-lamb-mint.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lamb",
@@ -1926,6 +2109,9 @@
     {
       "key": "lamb-duck-02-duck-rosemary",
       "path": "/images/recipes/real/lamb-duck-02-duck-rosemary.svg",
+      "placeholderPath": "/images/recipes/real/lamb-duck-02-duck-rosemary.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lamb",
@@ -1954,6 +2140,9 @@
     {
       "key": "lamb-duck-03-lamb-cinnamon",
       "path": "/images/recipes/real/lamb-duck-03-lamb-cinnamon.svg",
+      "placeholderPath": "/images/recipes/real/lamb-duck-03-lamb-cinnamon.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lamb",
@@ -1982,6 +2171,9 @@
     {
       "key": "lamb-duck-04-lamb-mint",
       "path": "/images/recipes/real/lamb-duck-04-lamb-mint.svg",
+      "placeholderPath": "/images/recipes/real/lamb-duck-04-lamb-mint.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lamb",
@@ -2010,6 +2202,9 @@
     {
       "key": "lamb-duck-05-duck-rosemary",
       "path": "/images/recipes/real/lamb-duck-05-duck-rosemary.svg",
+      "placeholderPath": "/images/recipes/real/lamb-duck-05-duck-rosemary.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lamb",
@@ -2038,6 +2233,9 @@
     {
       "key": "lamb-duck-06-lamb-cinnamon",
       "path": "/images/recipes/real/lamb-duck-06-lamb-cinnamon.svg",
+      "placeholderPath": "/images/recipes/real/lamb-duck-06-lamb-cinnamon.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lamb",
@@ -2065,7 +2263,10 @@
     },
     {
       "key": "eggs-01-dill-eggs",
-      "path": "/images/recipes/ai/eggs-01-dill-eggs.svg",
+      "path": "/images/recipes/ai/eggs-01-dill-eggs.webp",
+      "placeholderPath": "/images/recipes/ai/eggs-01-dill-eggs.svg",
+      "targetRasterPath": "/images/recipes/ai/eggs-01-dill-eggs.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "eggs"
@@ -2093,6 +2294,9 @@
     {
       "key": "eggs-02-parsley-greens",
       "path": "/images/recipes/real/eggs-02-parsley-greens.svg",
+      "placeholderPath": "/images/recipes/real/eggs-02-parsley-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "eggs"
@@ -2120,6 +2324,9 @@
     {
       "key": "eggs-03-quinoa-eggs",
       "path": "/images/recipes/real/eggs-03-quinoa-eggs.svg",
+      "placeholderPath": "/images/recipes/real/eggs-03-quinoa-eggs.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "eggs"
@@ -2147,6 +2354,9 @@
     {
       "key": "eggs-04-cauliflower-eggs",
       "path": "/images/recipes/real/eggs-04-cauliflower-eggs.svg",
+      "placeholderPath": "/images/recipes/real/eggs-04-cauliflower-eggs.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "eggs"
@@ -2174,6 +2384,9 @@
     {
       "key": "eggs-05-dill-eggs",
       "path": "/images/recipes/real/eggs-05-dill-eggs.svg",
+      "placeholderPath": "/images/recipes/real/eggs-05-dill-eggs.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "eggs"
@@ -2201,6 +2414,9 @@
     {
       "key": "eggs-06-parsley-greens",
       "path": "/images/recipes/real/eggs-06-parsley-greens.svg",
+      "placeholderPath": "/images/recipes/real/eggs-06-parsley-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "eggs"
@@ -2228,6 +2444,9 @@
     {
       "key": "eggs-07-quinoa-eggs",
       "path": "/images/recipes/real/eggs-07-quinoa-eggs.svg",
+      "placeholderPath": "/images/recipes/real/eggs-07-quinoa-eggs.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "eggs"
@@ -2255,6 +2474,9 @@
     {
       "key": "eggs-08-cauliflower-eggs",
       "path": "/images/recipes/real/eggs-08-cauliflower-eggs.svg",
+      "placeholderPath": "/images/recipes/real/eggs-08-cauliflower-eggs.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "eggs"
@@ -2282,6 +2504,9 @@
     {
       "key": "tofu-01-ginger-rice",
       "path": "/images/recipes/real/tofu-01-ginger-rice.svg",
+      "placeholderPath": "/images/recipes/real/tofu-01-ginger-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "tofu"
@@ -2309,6 +2534,9 @@
     {
       "key": "tofu-02-garlic-quinoa",
       "path": "/images/recipes/real/tofu-02-garlic-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/tofu-02-garlic-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "tofu"
@@ -2336,6 +2564,9 @@
     {
       "key": "tofu-03-mint-greens",
       "path": "/images/recipes/real/tofu-03-mint-greens.svg",
+      "placeholderPath": "/images/recipes/real/tofu-03-mint-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "tofu"
@@ -2363,6 +2594,9 @@
     {
       "key": "tofu-04-ginger-rice",
       "path": "/images/recipes/real/tofu-04-ginger-rice.svg",
+      "placeholderPath": "/images/recipes/real/tofu-04-ginger-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "tofu"
@@ -2390,6 +2624,9 @@
     {
       "key": "tofu-05-garlic-quinoa",
       "path": "/images/recipes/real/tofu-05-garlic-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/tofu-05-garlic-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "tofu"
@@ -2417,6 +2654,9 @@
     {
       "key": "tofu-06-mint-greens",
       "path": "/images/recipes/real/tofu-06-mint-greens.svg",
+      "placeholderPath": "/images/recipes/real/tofu-06-mint-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "tofu"
@@ -2444,6 +2684,9 @@
     {
       "key": "legumes-01-lentil-quinoa",
       "path": "/images/recipes/real/legumes-01-lentil-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/legumes-01-lentil-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lentils",
@@ -2473,6 +2716,9 @@
     {
       "key": "legumes-02-chickpea-rice",
       "path": "/images/recipes/real/legumes-02-chickpea-rice.svg",
+      "placeholderPath": "/images/recipes/real/legumes-02-chickpea-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lentils",
@@ -2502,6 +2748,9 @@
     {
       "key": "legumes-03-cumin-greens",
       "path": "/images/recipes/real/legumes-03-cumin-greens.svg",
+      "placeholderPath": "/images/recipes/real/legumes-03-cumin-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lentils",
@@ -2531,6 +2780,9 @@
     {
       "key": "legumes-04-chickpea-pita",
       "path": "/images/recipes/real/legumes-04-chickpea-pita.svg",
+      "placeholderPath": "/images/recipes/real/legumes-04-chickpea-pita.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lentils",
@@ -2560,6 +2812,9 @@
     {
       "key": "legumes-05-lentil-quinoa",
       "path": "/images/recipes/real/legumes-05-lentil-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/legumes-05-lentil-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lentils",
@@ -2589,6 +2844,9 @@
     {
       "key": "legumes-06-chickpea-rice",
       "path": "/images/recipes/real/legumes-06-chickpea-rice.svg",
+      "placeholderPath": "/images/recipes/real/legumes-06-chickpea-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lentils",
@@ -2618,6 +2876,9 @@
     {
       "key": "legumes-07-cumin-greens",
       "path": "/images/recipes/real/legumes-07-cumin-greens.svg",
+      "placeholderPath": "/images/recipes/real/legumes-07-cumin-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lentils",
@@ -2647,6 +2908,9 @@
     {
       "key": "legumes-08-chickpea-pita",
       "path": "/images/recipes/real/legumes-08-chickpea-pita.svg",
+      "placeholderPath": "/images/recipes/real/legumes-08-chickpea-pita.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "lentils",
@@ -2675,7 +2939,10 @@
     },
     {
       "key": "mushroom-vegetable-01-mushroom-quinoa",
-      "path": "/images/recipes/ai/mushroom-vegetable-01-mushroom-quinoa.svg",
+      "path": "/images/recipes/ai/mushroom-vegetable-01-mushroom-quinoa.webp",
+      "placeholderPath": "/images/recipes/ai/mushroom-vegetable-01-mushroom-quinoa.svg",
+      "targetRasterPath": "/images/recipes/ai/mushroom-vegetable-01-mushroom-quinoa.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "mushrooms",
@@ -2704,6 +2971,9 @@
     {
       "key": "mushroom-vegetable-02-garlic-cauliflower",
       "path": "/images/recipes/real/mushroom-vegetable-02-garlic-cauliflower.svg",
+      "placeholderPath": "/images/recipes/real/mushroom-vegetable-02-garlic-cauliflower.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "mushrooms",
@@ -2732,6 +3002,9 @@
     {
       "key": "mushroom-vegetable-03-thyme-vegetables",
       "path": "/images/recipes/real/mushroom-vegetable-03-thyme-vegetables.svg",
+      "placeholderPath": "/images/recipes/real/mushroom-vegetable-03-thyme-vegetables.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "mushrooms",
@@ -2760,6 +3033,9 @@
     {
       "key": "mushroom-vegetable-04-parsley-rice",
       "path": "/images/recipes/real/mushroom-vegetable-04-parsley-rice.svg",
+      "placeholderPath": "/images/recipes/real/mushroom-vegetable-04-parsley-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "mushrooms",
@@ -2788,6 +3064,9 @@
     {
       "key": "mushroom-vegetable-05-mushroom-quinoa",
       "path": "/images/recipes/real/mushroom-vegetable-05-mushroom-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/mushroom-vegetable-05-mushroom-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "mushrooms",
@@ -2816,6 +3095,9 @@
     {
       "key": "mushroom-vegetable-06-garlic-cauliflower",
       "path": "/images/recipes/real/mushroom-vegetable-06-garlic-cauliflower.svg",
+      "placeholderPath": "/images/recipes/real/mushroom-vegetable-06-garlic-cauliflower.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "mushrooms",
@@ -2844,6 +3126,9 @@
     {
       "key": "mushroom-vegetable-07-thyme-vegetables",
       "path": "/images/recipes/real/mushroom-vegetable-07-thyme-vegetables.svg",
+      "placeholderPath": "/images/recipes/real/mushroom-vegetable-07-thyme-vegetables.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "mushrooms",
@@ -2872,6 +3157,9 @@
     {
       "key": "mushroom-vegetable-08-parsley-rice",
       "path": "/images/recipes/real/mushroom-vegetable-08-parsley-rice.svg",
+      "placeholderPath": "/images/recipes/real/mushroom-vegetable-08-parsley-rice.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "mushrooms",
@@ -2899,7 +3187,10 @@
     },
     {
       "key": "dairy-nuts-01-feta-quinoa",
-      "path": "/images/recipes/ai/dairy-nuts-01-feta-quinoa.svg",
+      "path": "/images/recipes/ai/dairy-nuts-01-feta-quinoa.webp",
+      "placeholderPath": "/images/recipes/ai/dairy-nuts-01-feta-quinoa.svg",
+      "targetRasterPath": "/images/recipes/ai/dairy-nuts-01-feta-quinoa.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "feta",
@@ -2929,6 +3220,9 @@
     {
       "key": "dairy-nuts-02-yogurt-herbs",
       "path": "/images/recipes/real/dairy-nuts-02-yogurt-herbs.svg",
+      "placeholderPath": "/images/recipes/real/dairy-nuts-02-yogurt-herbs.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "feta",
@@ -2958,6 +3252,9 @@
     {
       "key": "dairy-nuts-03-almond-greens",
       "path": "/images/recipes/real/dairy-nuts-03-almond-greens.svg",
+      "placeholderPath": "/images/recipes/real/dairy-nuts-03-almond-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "feta",
@@ -2987,6 +3284,9 @@
     {
       "key": "dairy-nuts-04-feta-pita",
       "path": "/images/recipes/real/dairy-nuts-04-feta-pita.svg",
+      "placeholderPath": "/images/recipes/real/dairy-nuts-04-feta-pita.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "feta",
@@ -3016,6 +3316,9 @@
     {
       "key": "dairy-nuts-05-feta-quinoa",
       "path": "/images/recipes/real/dairy-nuts-05-feta-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/dairy-nuts-05-feta-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "feta",
@@ -3045,6 +3348,9 @@
     {
       "key": "dairy-nuts-06-yogurt-herbs",
       "path": "/images/recipes/real/dairy-nuts-06-yogurt-herbs.svg",
+      "placeholderPath": "/images/recipes/real/dairy-nuts-06-yogurt-herbs.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "feta",
@@ -3074,6 +3380,9 @@
     {
       "key": "dairy-nuts-07-almond-greens",
       "path": "/images/recipes/real/dairy-nuts-07-almond-greens.svg",
+      "placeholderPath": "/images/recipes/real/dairy-nuts-07-almond-greens.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "feta",
@@ -3103,6 +3412,9 @@
     {
       "key": "dairy-nuts-08-feta-pita",
       "path": "/images/recipes/real/dairy-nuts-08-feta-pita.svg",
+      "placeholderPath": "/images/recipes/real/dairy-nuts-08-feta-pita.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "feta",
@@ -3131,7 +3443,10 @@
     },
     {
       "key": "sweet-potato-01-ginger-quinoa",
-      "path": "/images/recipes/ai/sweet-potato-01-ginger-quinoa.svg",
+      "path": "/images/recipes/ai/sweet-potato-01-ginger-quinoa.webp",
+      "placeholderPath": "/images/recipes/ai/sweet-potato-01-ginger-quinoa.svg",
+      "targetRasterPath": "/images/recipes/ai/sweet-potato-01-ginger-quinoa.webp",
+      "reviewStatus": "imported-needs-visual-review",
       "sourceType": "generated",
       "mainMatches": [
         "sweet potatoes"
@@ -3158,6 +3473,9 @@
     {
       "key": "sweet-potato-02-cinnamon-carrots",
       "path": "/images/recipes/real/sweet-potato-02-cinnamon-carrots.svg",
+      "placeholderPath": "/images/recipes/real/sweet-potato-02-cinnamon-carrots.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "sweet potatoes"
@@ -3184,6 +3502,9 @@
     {
       "key": "sweet-potato-03-ginger-quinoa",
       "path": "/images/recipes/real/sweet-potato-03-ginger-quinoa.svg",
+      "placeholderPath": "/images/recipes/real/sweet-potato-03-ginger-quinoa.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "sweet potatoes"
@@ -3210,6 +3531,9 @@
     {
       "key": "sweet-potato-04-cinnamon-carrots",
       "path": "/images/recipes/real/sweet-potato-04-cinnamon-carrots.svg",
+      "placeholderPath": "/images/recipes/real/sweet-potato-04-cinnamon-carrots.svg",
+      "targetRasterPath": null,
+      "reviewStatus": "placeholder-fallback",
       "sourceType": "generated",
       "mainMatches": [
         "sweet potatoes"

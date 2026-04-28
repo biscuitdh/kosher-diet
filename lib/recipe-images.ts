@@ -5,6 +5,9 @@ export type RecipeImageSourceType = "generated" | "pexels" | "unsplash" | "wikim
 export type RecipeImageAsset = {
   key: string;
   path: string;
+  placeholderPath?: string;
+  targetRasterPath?: string | null;
+  reviewStatus?: string;
   sourceType: RecipeImageSourceType;
   mainMatches: string[];
   familyMatches: string[];
@@ -18,7 +21,7 @@ export type RecipeImageAsset = {
   license: string | null;
 };
 
-type RecipeImageContext = {
+export type RecipeImageContext = {
   mainTitle: string;
   mainFamily: string;
   baseTitle: string;
@@ -28,6 +31,10 @@ type RecipeImageContext = {
 };
 
 const recipeImageAssets = recipeImageAssetsJson as RecipeImageAsset[];
+
+export function isRasterRecipeImagePath(path: string) {
+  return /\.(?:webp|png|jpe?g)$/i.test(path);
+}
 
 function normalize(value: string) {
   return value
@@ -72,7 +79,8 @@ function scoreAsset(asset: RecipeImageAsset, context: RecipeImageContext) {
 
   if (context.kosherForPassover && asset.passoverSafe) score += 42;
   if (!context.kosherForPassover && !asset.passoverSafe) score += 4;
-  if (asset.path.startsWith("/images/recipes/ai/")) score += 130;
+  if (asset.path.startsWith("/images/recipes/ai/") && isRasterRecipeImagePath(asset.path)) score += 260;
+  else if (asset.path.startsWith("/images/recipes/ai/")) score += 130;
   if (asset.sourceType === "generated") score += 18;
   if (asset.sourceType === "wikimedia") score += 12;
 
@@ -88,9 +96,13 @@ export function findRecipeImageAssetByKey(key: string) {
   return recipeImageAssets.find((asset) => asset.key === key);
 }
 
-export function selectRecipeImageAsset(context: RecipeImageContext) {
-  return [...recipeImageAssets].sort((a, b) => {
+export function rankRecipeImageAssets(context: RecipeImageContext, assets: RecipeImageAsset[] = recipeImageAssets) {
+  return [...assets].sort((a, b) => {
     const scoreDelta = scoreAsset(b, context) - scoreAsset(a, context);
     return scoreDelta || a.key.localeCompare(b.key);
-  })[0];
+  });
+}
+
+export function selectRecipeImageAsset(context: RecipeImageContext) {
+  return rankRecipeImageAssets(context)[0];
 }

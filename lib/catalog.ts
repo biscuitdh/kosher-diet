@@ -1,3 +1,4 @@
+import { resolveCatalogRecipeImagePath } from "@/lib/catalog-images";
 import { selectRecipeImageAsset } from "@/lib/recipe-images";
 import {
   FIXED_SAFETY_PROFILE,
@@ -561,12 +562,13 @@ function buildRecipe(index: number): CatalogRecipeRecord {
     index
   });
 
+  const id = `catalog-${String(index + 1).padStart(4, "0")}`;
   const baseRecord = recipeRecordSchema.parse({
-    id: `catalog-${String(index + 1).padStart(4, "0")}`,
+    id,
     recipe,
     createdAt: CREATED_AT,
     updatedAt: CREATED_AT,
-    imagePath: recipeImage.path,
+    imagePath: resolveCatalogRecipeImagePath(id, recipeImage.path),
     source: "imported",
     safetyBadge: "Nightshade & Tomato Safe ✅"
   });

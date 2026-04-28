@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("dashboard renders primary CTA", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: /Find Meal Ideas/i }).first()).toBeVisible();
-  await expect(page.getByText("Nightshade & Tomato Safe")).toBeVisible();
+  await expect(page.getByText("Nightshade & Tomato Safe")).toHaveCount(0);
   await expect(page.getByText("Set the profile once")).toHaveCount(0);
 });
 
@@ -46,4 +46,5 @@ test("generator stores recent Passover walleye searches", async ({ page }) => {
 
   await page.getByTestId("recipe-match-card").first().click();
   await expect(page).toHaveURL(/\/recipes\/catalog-/);
+  await expect(page.getByText("Safety check passed")).toHaveCount(0);
 });

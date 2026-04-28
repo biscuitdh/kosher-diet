@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { isCatalogRecipeImagePath, resolveCatalogRecipeImagePath } from "@/lib/catalog-images";
 import {
   findBestCatalogRecipe,
   findCatalogRecipeById,
@@ -8,7 +9,7 @@ import {
   listCatalogRecipes,
   searchCatalogRecipes
 } from "@/lib/catalog";
-import { findRecipeImageAssetByKey, listRecipeImageAssets } from "@/lib/recipe-images";
+import { findRecipeImageAssetByKey, listRecipeImageAssets, rankRecipeImageAssets, type RecipeImageAsset } from "@/lib/recipe-images";
 import { FIXED_SAFETY_PROFILE, recipeSchema } from "@/lib/schemas";
 import { validateRecipeSafety } from "@/lib/validators/forbidden-ingredients";
 
@@ -47,7 +48,7 @@ describe("recipe catalog", () => {
     expect(assets.length).toBeLessThanOrEqual(120);
 
     for (const record of listCatalogRecipes()) {
-      expect(/^\/images\/recipes\/(?:real|ai)\//.test(record.imagePath), record.recipe.title).toBe(true);
+      expect(/^\/images\/recipes\/(?:real|ai|catalog)\//.test(record.imagePath), record.recipe.title).toBe(true);
       expect(existsSync(join(process.cwd(), "public", record.imagePath)), record.imagePath).toBe(true);
       expect(findRecipeImageAssetByKey(record.catalog.imageKey), record.catalog.imageKey).toBeDefined();
     }
@@ -64,6 +65,22 @@ describe("recipe catalog", () => {
     }
   });
 
+  it("prefers exact per-recipe catalog images when present", () => {
+    expect(isCatalogRecipeImagePath("/images/recipes/catalog/catalog-0001.webp")).toBe(true);
+    expect(isCatalogRecipeImagePath("/images/recipes/ai/walleye.webp")).toBe(false);
+    expect(
+      resolveCatalogRecipeImagePath("catalog-0001", "/images/recipes/ai/fallback.webp", {
+        "catalog-0001": "/images/recipes/catalog/catalog-0001.webp"
+      })
+    ).toBe("/images/recipes/catalog/catalog-0001.webp");
+    expect(
+      resolveCatalogRecipeImagePath("catalog-0002", "/images/recipes/ai/fallback.webp", {
+        "catalog-0001": "/images/recipes/catalog/catalog-0001.webp",
+        "catalog-0002": "https://example.com/nope.webp"
+      })
+    ).toBe("/images/recipes/ai/fallback.webp");
+  });
+
   it("prefers priority dish-specific assets for common fish searches", () => {
     const [walleye] = searchCatalogRecipes({ mainIngredient: "walleye", kosherForPassover: true }, 1, {
       seed: "photo-check",
@@ -76,6 +93,45 @@ describe("recipe catalog", () => {
 
     expect(findRecipeImageAssetByKey(walleye.catalog.imageKey)?.path).toMatch(/^\/images\/recipes\/ai\//);
     expect(findRecipeImageAssetByKey(salmon.catalog.imageKey)?.path).toMatch(/^\/images\/recipes\/ai\//);
+  });
+
+  it("prefers imported raster assets over SVG placeholders", () => {
+    const baseAsset: RecipeImageAsset = {
+      key: "walleye-placeholder",
+      path: "/images/recipes/ai/walleye-placeholder.svg",
+      sourceType: "generated",
+      mainMatches: ["walleye"],
+      familyMatches: ["fish"],
+      baseMatches: ["quinoa"],
+      flavorMatches: ["lemon"],
+      passoverSafe: true,
+      subject: "walleye",
+      prompt: "walleye",
+      attribution: null,
+      sourceUrl: null,
+      license: null
+    };
+    const ranked = rankRecipeImageAssets(
+      {
+        mainTitle: "Walleye Fillets",
+        mainFamily: "fish",
+        baseTitle: "Quinoa",
+        flavorTitle: "Lemon Herb",
+        kosherForPassover: true,
+        index: 1
+      },
+      [
+        baseAsset,
+        {
+          ...baseAsset,
+          key: "walleye-raster",
+          path: "/images/recipes/ai/walleye-raster.webp",
+          targetRasterPath: "/images/recipes/ai/walleye-raster.webp"
+        }
+      ]
+    );
+
+    expect(ranked[0]?.key).toBe("walleye-raster");
   });
 
   it("includes and ranks strict kosher for Passover walleye recipes", () => {

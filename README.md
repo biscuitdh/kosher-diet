@@ -121,10 +121,14 @@ If Wi-Fi is not `en0`, check the active interface in macOS network settings. Kee
   - Mock local provider
   - Optional only; not required for the default catalog flow
 - Recipe images:
-  - 112 local dish-aware recipe image assets in `public/images/recipes/real/`
-  - safe Wikimedia photo assets for common fish, salmon, and mushroom/quinoa recipes
+  - 112 local dish-aware recipe image assets in `public/images/recipes/real/` and `public/images/recipes/ai/`
+  - optional per-recipe catalog thumbnails in `public/images/recipes/catalog/catalog-0001.webp` through `catalog-1000.webp`
+  - `lib/catalog-recipe-images.json` maps completed per-recipe thumbnails and lets the app fall back to archetype images when a recipe thumbnail is missing
+  - reviewed Wikimedia photo assets for common fish, salmon, and mushroom/quinoa recipes
+  - Apple Creative Studio handoff prompts in `public/images/recipes/ai/apple-creative-studio-worklist.json`
+  - imported `.webp` / `.png` files in `public/images/recipes/ai/` are preferred over SVG placeholders after `npm run images:recipes`
   - catalog image routing by main ingredient, kosher type, base, flavor, and Passover compatibility
-  - generated SVG assets remain as fallback where no safe photo source is good enough
+  - generated SVG assets remain as fallback until higher-quality raster images are imported
   - no remote hotlinks
   - online source references and generated prompts are tracked in `public/images/recipes/real/manifest.json`
 
@@ -132,7 +136,32 @@ Regenerate and verify local recipe images:
 
 ```bash
 npm run images:recipes
+npm run images:worklist
 npm run images:check
+```
+
+Per-recipe thumbnail batches:
+
+```bash
+# Docker-safe: export the next 50 missing catalog image prompts.
+docker compose run --rm web-dev npm run images:catalog:worklist
+
+# Host-side after dropping raw images named catalog-0001.png, etc. into:
+# public/images/recipes/catalog/incoming/
+# Requires local ffmpeg and cwebp.
+npm run images:catalog:import
+npm run images:catalog:contact
+
+# Review the contact sheet before exposing images in the app.
+# Approve a whole reviewed batch, or reject specific bad images.
+npm run images:catalog:qa -- --status=approved --ids=1-50 --note="Reviewed contact sheet"
+npm run images:catalog:qa -- --status=rejected --ids=catalog-0007 --note="Bad food/category match"
+
+# Only approved images are included in the app manifest.
+npm run images:catalog:manifest
+
+# Docker-safe validation after approval/import.
+docker compose run --rm web-dev npm run images:check
 ```
 
 ## Security And Operational Notes
@@ -175,6 +204,7 @@ With Docker:
 docker compose run --rm web-dev npm run typecheck
 docker compose run --rm web-dev npm run lint
 docker compose run --rm web-dev npm run test
+docker compose run --rm web-dev npm run images:worklist
 docker compose run --rm web-dev npm run images:check
 docker compose build web
 ```

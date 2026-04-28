@@ -107,11 +107,16 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
         </Link>
       </Button>
 
-      <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="overflow-hidden rounded-lg border bg-card shadow-soft">
-          <div className="aspect-[4/3] bg-muted">
-            <Image src={withBasePath(record.imagePath)} alt="" width={900} height={675} priority className="size-full object-cover" />
-          </div>
+      <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+        <div className="mx-auto w-full max-w-[26rem] overflow-hidden rounded-lg border bg-card shadow-soft lg:mx-0">
+          <Image
+            src={withBasePath(record.imagePath)}
+            alt=""
+            width={320}
+            height={240}
+            priority
+            className="block aspect-[4/3] h-auto w-full object-cover"
+          />
         </div>
 
         <div className="space-y-5">

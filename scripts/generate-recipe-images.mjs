@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const LEGACY_OUT_DIR = join(process.cwd(), "public", "images", "recipes");
@@ -6,6 +6,7 @@ const REAL_OUT_DIR = join(LEGACY_OUT_DIR, "real");
 const AI_OUT_DIR = join(LEGACY_OUT_DIR, "ai");
 const REGISTRY_PATH = join(process.cwd(), "lib", "recipe-image-assets.json");
 const LEGACY_STAGED_COUNT = 48;
+const RASTER_EXTENSIONS = ["webp", "png", "jpg", "jpeg"];
 
 const researchReferences = [
   {
@@ -400,6 +401,11 @@ function slug(value) {
     .replace(/^-+|-+$/g, "");
 }
 
+function preferredAiPath(key) {
+  const importedExtension = RASTER_EXTENSIONS.find((extension) => existsSync(join(AI_OUT_DIR, `${key}.${extension}`)));
+  return importedExtension ? `/images/recipes/ai/${key}.${importedExtension}` : `/images/recipes/ai/${key}.svg`;
+}
+
 function imageAssets() {
   return imageGroups.flatMap((group) =>
     Array.from({ length: group.count }, (_, index) => {
@@ -407,9 +413,13 @@ function imageAssets() {
       const key = `${group.prefix}-${String(index + 1).padStart(2, "0")}-${slug(variant)}`;
       const aiPriority = index < (group.aiPriorityCount ?? 0);
       const directory = aiPriority ? "ai" : "real";
+      const path = aiPriority ? preferredAiPath(key) : `/images/recipes/${directory}/${key}.svg`;
       return {
         key,
-        path: `/images/recipes/${directory}/${key}.svg`,
+        path,
+        placeholderPath: `/images/recipes/${directory}/${key}.svg`,
+        targetRasterPath: aiPriority ? `/images/recipes/ai/${key}.webp` : null,
+        reviewStatus: aiPriority && path.endsWith(".svg") ? "pending-external-generation" : aiPriority ? "imported-needs-visual-review" : "placeholder-fallback",
         sourceType: "generated",
         mainMatches: group.mainMatches,
         familyMatches: [group.family],
@@ -626,7 +636,7 @@ for (let index = 0; index < LEGACY_STAGED_COUNT; index += 1) {
 const assets = [...externalPhotoAssets, ...imageAssets()];
 for (const [index, asset] of assets.entries()) {
   if (asset.sourceType === "generated") {
-    const outDir = asset.path.startsWith("/images/recipes/ai/") ? AI_OUT_DIR : REAL_OUT_DIR;
+    const outDir = asset.placeholderPath?.startsWith("/images/recipes/ai/") ? AI_OUT_DIR : REAL_OUT_DIR;
     writeFileSync(join(outDir, `${asset.key}.svg`), realSvg(asset, index));
   }
 }
@@ -635,7 +645,7 @@ const publicManifest = {
   generatedAt: "2026-04-27T00:00:00.000Z",
   format: "svg",
   assetCount: assets.length,
-  sourcePolicy: "local generated/AI-ready dish assets first, sourced photos as reviewed fallback, no hotlinked images",
+  sourcePolicy: "external raster imports under /images/recipes/ai are preferred, SVGs are placeholders, sourced photos are reviewed fallback, no hotlinked images",
   researchReferences,
   assets: assets.map(publicAsset)
 };

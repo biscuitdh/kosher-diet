@@ -62,10 +62,10 @@ export function DashboardClient() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ChefHat className="size-5 text-primary" />
-              Safe Shopping Catalog
+              Shopping Catalog
             </CardTitle>
             <CardDescription>
-              Strict kosher rules, deterministic ingredient blocking, meals for two, and local recipe data ready for mobile testing.
+              Strict kosher rules, meals for two, and local recipe data ready for mobile testing.
             </CardDescription>
           </CardHeader>
         </Card>
