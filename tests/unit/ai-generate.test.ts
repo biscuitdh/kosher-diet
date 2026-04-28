@@ -12,7 +12,6 @@ describe("AI recipe generation", () => {
       cuisinePreference: "Mediterranean",
       mainIngredient: "sweet potatoes",
       servings: 4,
-      extraNotes: "",
       surpriseMe: false
     });
 

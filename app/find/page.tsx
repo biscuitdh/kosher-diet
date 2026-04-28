@@ -4,13 +4,13 @@ import { GeneratorClient } from "@/components/generator-client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = {
-  title: "Recipe Brief"
+  title: "Find Recipes"
 };
 
-export default function GeneratePage() {
+export default function FindPage() {
   return (
     <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-      <GeneratorClient />
+      <GeneratorClient mode="matches" />
     </Suspense>
   );
 }

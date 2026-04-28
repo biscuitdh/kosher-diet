@@ -219,6 +219,14 @@ describe("recipe catalog", () => {
     }
   });
 
+  it("boosts matches compatible with the selected cooking device without hard filtering", () => {
+    const slowCookerMatches = searchCatalogRecipes({ cookingDevice: "slow-cooker" }, 12);
+    const airFryerMatches = searchCatalogRecipes({ cookingDevice: "air-fryer" }, 12);
+
+    expect(slowCookerMatches.some((match) => match.catalog.keywords.includes("meat") || match.catalog.keywords.includes("legume"))).toBe(true);
+    expect(airFryerMatches.some((match) => match.catalog.keywords.includes("fish") || match.catalog.keywords.includes("vegetable"))).toBe(true);
+  });
+
   it("ranks recipe title search above generic matches", () => {
     const knownRecipe = listCatalogRecipes()[17];
     const [match] = searchCatalogRecipes({ recipeName: knownRecipe.recipe.title }, 1);

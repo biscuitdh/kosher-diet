@@ -4,6 +4,7 @@ import {
   FIXED_SAFETY_PROFILE,
   recipeRecordSchema,
   recipeSchema,
+  COOKING_DEVICE_LABELS,
   type GenerationRequest,
   type KosherType,
   type Recipe,
@@ -56,9 +57,9 @@ export type CatalogQuery = Partial<
     | "cuisinePreference"
     | "mainIngredient"
     | "availableIngredients"
-    | "extraNotes"
     | "servings"
     | "kosherForPassover"
+    | "cookingDevice"
     | "maxCaloriesPerServing"
     | "maxTotalTimeMinutes"
     | "variationOf"
@@ -665,8 +666,31 @@ function scoreRecipe(record: CatalogRecipeRecord, query: CatalogQuery) {
   for (const term of terms(query.availableIngredients)) {
     if (text.includes(term)) score += 14;
   }
-  for (const term of terms(query.extraNotes)) {
-    if (text.includes(term)) score += 4;
+  if (query.cookingDevice && query.cookingDevice !== "any") {
+    const deviceLabel = COOKING_DEVICE_LABELS[query.cookingDevice].toLowerCase();
+    const keywordsByDevice: Record<Exclude<GenerationRequest["cookingDevice"], "any">, string[]> = {
+      pan: ["pan", "skillet", "saute"],
+      oven: ["oven", "roast", "bake"],
+      "slow-cooker": ["slow cooker", "crock pot", "braise", "stew"],
+      "air-fryer": ["air fryer", "crisp", "roast"],
+      stovetop: ["stovetop", "pan", "pot"],
+      "instant-pot": ["instant pot", "pressure cooker", "pot"]
+    };
+    const familyHints: Record<Exclude<GenerationRequest["cookingDevice"], "any">, string[]> = {
+      pan: ["fish", "eggs", "vegetable", "dairy"],
+      oven: ["fish", "meat", "vegetable"],
+      "slow-cooker": ["meat", "legume"],
+      "air-fryer": ["fish", "meat", "vegetable"],
+      stovetop: ["fish", "eggs", "legume", "soy", "vegetable", "dairy"],
+      "instant-pot": ["meat", "legume", "soy"]
+    };
+    for (const keyword of keywordsByDevice[query.cookingDevice]) {
+      if (text.includes(keyword)) score += 14;
+    }
+    for (const hint of familyHints[query.cookingDevice]) {
+      if (record.catalog.keywords.includes(hint)) score += 11;
+    }
+    if (text.includes(deviceLabel)) score += 20;
   }
   if (query.servings && record.recipe.servings === Number(query.servings)) {
     score += 8;

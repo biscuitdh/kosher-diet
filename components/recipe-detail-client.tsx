@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, Clock, Copy, ExternalLink, Flame, RefreshCw, Save, ShoppingCart, UsersRound } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Check, Clock, Copy, ExternalLink, Flame, Heart, RefreshCw, ShoppingCart, UsersRound } from "lucide-react";
+import { RecipeProfileSelector } from "@/components/recipe-profile-selector";
 import { RecipeImage } from "@/components/recipe/recipe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { findRecipeById, loadSavedRecipes, removeSavedRecipe, upsertSavedRecipe } from "@/lib/storage";
-import type { RecipeRecord, SavedRecipe } from "@/lib/schemas";
+import { findRecipeById, getSelectedRecipeProfile, isRecipeSaved, removeSavedRecipe, upsertSavedRecipe } from "@/lib/storage";
+import type { RecipeProfile, RecipeRecord, SavedRecipe } from "@/lib/schemas";
 import { formatIngredientForCopy, shoppingLinksForIngredient } from "@/lib/shopping";
 import { formatMinutes, titleCase } from "@/lib/utils";
 
@@ -21,13 +22,16 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
   const [record, setRecord] = useState<RecipeRecord | SavedRecipe | undefined>();
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
   const [isSaved, setIsSaved] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<RecipeProfile | undefined>();
   const [loaded, setLoaded] = useState(false);
   const [copiedItem, setCopiedItem] = useState("");
 
   useEffect(() => {
     const found = findRecipeById(id);
+    const profile = getSelectedRecipeProfile();
     setRecord(found);
-    setIsSaved(loadSavedRecipes().some((recipe) => recipe.id === id));
+    setSelectedProfile(profile);
+    setIsSaved(isRecipeSaved(id, profile.id));
     setLoaded(true);
   }, [id]);
 
@@ -47,8 +51,9 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
 
   function toggleSave() {
     if (!record) return;
+    const profileId = selectedProfile?.id ?? getSelectedRecipeProfile().id;
     if (isSaved) {
-      removeSavedRecipe(record.id);
+      removeSavedRecipe(record.id, profileId);
       setIsSaved(false);
       return;
     }
@@ -58,10 +63,16 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
       createdAt: record.createdAt,
       updatedAt: new Date().toISOString(),
       imagePath: record.imagePath,
+      profileId,
       source: record.source
     });
     setIsSaved(true);
   }
+
+  const handleProfileChange = useCallback((profile: RecipeProfile) => {
+    setSelectedProfile(profile);
+    setIsSaved(isRecipeSaved(id, profile.id));
+  }, [id]);
 
   async function copyText(text: string, copiedLabel: string) {
     try {
@@ -82,7 +93,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
         </CardHeader>
         <CardContent>
           <Button asChild>
-            <Link href="/generate">Find a recipe</Link>
+            <Link href="/find">Find a recipe</Link>
           </Button>
         </CardContent>
       </Card>
@@ -155,8 +166,8 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button onClick={toggleSave} size="lg" variant={isSaved ? "secondary" : "default"}>
-              <Save />
-              {isSaved ? "Saved" : "Save"}
+              <Heart />
+              {isSaved ? "Favorited" : "Favorite"}
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href={`/generate?variation=${record.id}`}>
@@ -165,6 +176,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
               </Link>
             </Button>
           </div>
+          <RecipeProfileSelector onProfileChange={handleProfileChange} />
         </div>
       </section>
 

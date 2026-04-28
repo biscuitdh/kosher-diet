@@ -9,6 +9,20 @@ export type KosherPreference = z.infer<typeof kosherPreferenceSchema>;
 export const mealTypeSchema = z.enum(["meat", "dairy", "parve"]);
 export type MealType = z.infer<typeof mealTypeSchema>;
 
+export const COOKING_DEVICE_VALUES = ["any", "pan", "oven", "slow-cooker", "air-fryer", "stovetop", "instant-pot"] as const;
+export const cookingDeviceSchema = z.enum(COOKING_DEVICE_VALUES);
+export type CookingDevice = z.infer<typeof cookingDeviceSchema>;
+
+export const COOKING_DEVICE_LABELS: Record<CookingDevice, string> = {
+  any: "Any",
+  pan: "Pan / skillet",
+  oven: "Oven",
+  "slow-cooker": "Crock pot",
+  "air-fryer": "Air fryer",
+  stovetop: "Stovetop",
+  "instant-pot": "Instant Pot"
+};
+
 export const ALLERGY_OPTIONS = [
   {
     id: "nightshades",
@@ -57,6 +71,16 @@ export const FIXED_SAFETY_PROFILE: UserProfile = profileSchema.parse({
   mealTypes: DEFAULT_MEAL_TYPES
 });
 
+export const DEFAULT_RECIPE_PROFILE_ID = "household";
+
+export const recipeProfileSchema = z.object({
+  id: z.string().trim().min(1).max(120),
+  name: z.string().trim().min(1).max(80),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
+});
+export type RecipeProfile = z.infer<typeof recipeProfileSchema>;
+
 export const shoppingStoreSchema = z.enum(["walmart", "wegmans", "kosh", "grow-and-behold", "kol-foods", "specialty-kosher"]);
 export type ShoppingStore = z.infer<typeof shoppingStoreSchema>;
 
@@ -104,8 +128,8 @@ export const generationRequestSchema = z.object({
   mainIngredient: z.string().trim().max(120).optional().default("Seasonal vegetables"),
   availableIngredients: z.string().trim().max(500).optional().default(""),
   servings: z.coerce.number().int().min(1).max(24).default(2),
-  extraNotes: z.string().trim().max(1000).optional().default(""),
   kosherForPassover: z.boolean().optional().default(false),
+  cookingDevice: cookingDeviceSchema.optional().default("any"),
   maxCaloriesPerServing: z.coerce.number().int().min(1).max(3000).optional(),
   maxTotalTimeMinutes: z.coerce.number().int().min(1).max(1440).optional(),
   surpriseMe: z.boolean().optional().default(false),
@@ -120,8 +144,8 @@ export const finderSearchSchema = z.object({
   mainIngredient: z.string().trim().max(120).default("chicken, salmon, eggs, or seasonal vegetables"),
   availableIngredients: z.string().trim().max(500).default(""),
   servings: z.coerce.number().int().min(1).max(24).default(2),
-  extraNotes: z.string().trim().max(1000).default(""),
   kosherForPassover: z.boolean().default(false),
+  cookingDevice: cookingDeviceSchema.default("any"),
   maxCaloriesPerServing: z.coerce.number().int().min(1).max(3000).optional(),
   maxTotalTimeMinutes: z.coerce.number().int().min(1).max(1440).optional()
 });
@@ -133,6 +157,7 @@ export const savedRecipeSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   imagePath: z.string().min(1),
+  profileId: z.string().trim().min(1).default(DEFAULT_RECIPE_PROFILE_ID),
   source: z.enum(["generated", "imported", "manual"]).default("generated")
 });
 export type SavedRecipe = z.infer<typeof savedRecipeSchema>;

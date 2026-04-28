@@ -33,6 +33,8 @@ export const mainIngredientSuggestions: Suggestion[] = [
   { label: "Chickpeas", value: "chickpeas", blockedForPassover: true },
   { label: "Mushrooms", value: "mushrooms" },
   { label: "Sweet potatoes", value: "sweet potatoes" },
+  { label: "Cauliflower rice", value: "cauliflower rice" },
+  { label: "Matzo farfel", value: "kosher for Passover matzo farfel" },
   { label: "Pasta", value: "pasta", blockedBy: ["gluten"], blockedForPassover: true }
 ];
 
@@ -43,6 +45,9 @@ export const availableIngredientSuggestions: Suggestion[] = [
   { label: "Fresh herbs", value: "fresh herbs" },
   { label: "Rice", value: "rice", blockedForPassover: true },
   { label: "Quinoa", value: "quinoa" },
+  { label: "Matzo farfel", value: "kosher for Passover matzo farfel" },
+  { label: "Cauliflower rice", value: "cauliflower rice" },
+  { label: "Zucchini", value: "zucchini" },
   { label: "Eggs", value: "eggs", blockedBy: ["eggs"] },
   { label: "Tofu", value: "tofu", blockedBy: ["soy"], blockedForPassover: true },
   { label: "Feta", value: "feta", blockedBy: ["dairy"] },
@@ -50,14 +55,11 @@ export const availableIngredientSuggestions: Suggestion[] = [
   { label: "Pita", value: "pita", blockedBy: ["gluten"], blockedForPassover: true }
 ];
 
-export const extraNoteSuggestions: Suggestion[] = [
-  { label: "Low cleanup", value: "low cleanup" },
-  { label: "Make ahead", value: "make ahead" },
-  { label: "Kid-friendly", value: "kid-friendly" },
-  { label: "No cilantro", value: "no cilantro" }
-];
-
-export function filterSuggestionsForProfile(suggestions: readonly Suggestion[], profile: UserProfile, options: { kosherForPassover?: boolean } = {}) {
+export function filterSuggestionsForProfile(
+  suggestions: readonly Suggestion[],
+  profile: UserProfile,
+  options: { kosherForPassover?: boolean } = {}
+) {
   const blocked = new Set(profile.allergies);
   return suggestions.filter((suggestion) => {
     if (options.kosherForPassover && suggestion.blockedForPassover) return false;

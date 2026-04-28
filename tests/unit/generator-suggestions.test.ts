@@ -35,6 +35,8 @@ describe("generator suggestions", () => {
 
     expect(labels).toContain("Walleye");
     expect(labels).toContain("Eggs");
+    expect(labels).toContain("Matzo farfel");
+    expect(labels).toContain("Cauliflower rice");
     expect(labels).not.toContain("Tofu");
     expect(labels).not.toContain("Lentils");
     expect(labels).not.toContain("Chickpeas");

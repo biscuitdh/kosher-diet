@@ -3,11 +3,14 @@
 import { RECIPE_IMAGE_PLACEHOLDERS, STORAGE_KEYS } from "@/lib/constants";
 import { findCatalogRecipeById } from "@/lib/catalog";
 import {
+  DEFAULT_RECIPE_PROFILE_ID,
   finderSearchSchema,
+  recipeProfileSchema,
   recipeRecordSchema,
   savedRecipeSchema,
   type FinderSearch,
   type Recipe,
+  type RecipeProfile,
   type RecipeRecord,
   type SavedRecipe
 } from "@/lib/schemas";
@@ -22,6 +25,13 @@ const CLIENT_AI_LIMIT = {
 };
 
 const MAX_RECENT_SEARCHES = 8;
+const MAX_SAVED_RECIPES_PER_PROFILE = 100;
+const DEFAULT_RECIPE_PROFILE: RecipeProfile = recipeProfileSchema.parse({
+  id: DEFAULT_RECIPE_PROFILE_ID,
+  name: "Household",
+  createdAt: "2026-04-28T00:00:00.000Z",
+  updatedAt: "2026-04-28T00:00:00.000Z"
+});
 
 function isBrowser() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -44,6 +54,14 @@ function writeJson<T>(key: string, value: T) {
 }
 
 export function loadSavedRecipes(): SavedRecipe[] {
+  return loadSavedRecipesForProfile(getSelectedRecipeProfileId());
+}
+
+export function loadSavedRecipesForProfile(profileId: string): SavedRecipe[] {
+  return loadAllSavedRecipes().filter((recipe) => recipe.profileId === profileId);
+}
+
+export function loadAllSavedRecipes(): SavedRecipe[] {
   const records = readJson<unknown[]>(STORAGE_KEYS.savedRecipes, []);
   return records.flatMap((record) => {
     const parsed = savedRecipeSchema.safeParse(record);
@@ -53,6 +71,62 @@ export function loadSavedRecipes(): SavedRecipe[] {
 
 export function saveSavedRecipes(recipes: SavedRecipe[]) {
   writeJson(STORAGE_KEYS.savedRecipes, recipes.map((recipe) => savedRecipeSchema.parse(recipe)));
+}
+
+export function createRecipeProfile(name = "Household"): RecipeProfile {
+  const now = new Date().toISOString();
+  return recipeProfileSchema.parse({
+    id: `recipe-profile-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name: name.trim() || "Household",
+    createdAt: now,
+    updatedAt: now
+  });
+}
+
+export function loadRecipeProfiles(): RecipeProfile[] {
+  const records = readJson<unknown[]>(STORAGE_KEYS.recipeProfiles, []);
+  const parsedProfiles = records.flatMap((record) => {
+    const parsed = recipeProfileSchema.safeParse(record);
+    return parsed.success ? [parsed.data] : [];
+  });
+  const hasDefault = parsedProfiles.some((profile) => profile.id === DEFAULT_RECIPE_PROFILE_ID);
+  return hasDefault ? parsedProfiles : [DEFAULT_RECIPE_PROFILE, ...parsedProfiles];
+}
+
+export function saveRecipeProfiles(profiles: RecipeProfile[]) {
+  const uniqueProfiles = profiles.reduce<RecipeProfile[]>((accumulator, profile) => {
+    const parsed = recipeProfileSchema.parse(profile);
+    const existingIndex = accumulator.findIndex((item) => item.id === parsed.id);
+    if (existingIndex >= 0) accumulator[existingIndex] = parsed;
+    else accumulator.push(parsed);
+    return accumulator;
+  }, []);
+  writeJson(STORAGE_KEYS.recipeProfiles, uniqueProfiles.length > 0 ? uniqueProfiles : [DEFAULT_RECIPE_PROFILE]);
+}
+
+export function getSelectedRecipeProfileId() {
+  const profiles = loadRecipeProfiles();
+  const selectedId = readJson<string>(STORAGE_KEYS.selectedRecipeProfileId, DEFAULT_RECIPE_PROFILE_ID);
+  return profiles.some((profile) => profile.id === selectedId) ? selectedId : profiles[0]?.id ?? DEFAULT_RECIPE_PROFILE_ID;
+}
+
+export function getSelectedRecipeProfile() {
+  const selectedId = getSelectedRecipeProfileId();
+  return loadRecipeProfiles().find((profile) => profile.id === selectedId) ?? DEFAULT_RECIPE_PROFILE;
+}
+
+export function selectRecipeProfile(profileId: string) {
+  if (!loadRecipeProfiles().some((profile) => profile.id === profileId)) return;
+  writeJson(STORAGE_KEYS.selectedRecipeProfileId, profileId);
+}
+
+export function upsertRecipeProfile(profile: RecipeProfile, selected = false) {
+  const now = new Date().toISOString();
+  const parsed = recipeProfileSchema.parse({ ...profile, name: profile.name.trim() || "Household", updatedAt: now });
+  const existing = loadRecipeProfiles().filter((item) => item.id !== parsed.id);
+  saveRecipeProfiles([parsed, ...existing]);
+  if (selected) selectRecipeProfile(parsed.id);
+  return parsed;
 }
 
 export function loadGeneratedRecipes(): RecipeRecord[] {
@@ -89,16 +163,24 @@ export function upsertGeneratedRecipe(record: RecipeRecord) {
 }
 
 export function upsertSavedRecipe(record: SavedRecipe) {
-  const existing = loadSavedRecipes().filter((recipe) => recipe.id !== record.id);
-  saveSavedRecipes([record, ...existing].slice(0, 100));
+  const profileId = record.profileId || getSelectedRecipeProfileId();
+  const parsed = savedRecipeSchema.parse({ ...record, profileId });
+  const existing = loadAllSavedRecipes().filter((recipe) => !(recipe.id === parsed.id && recipe.profileId === parsed.profileId));
+  const selectedProfileRecipes = [parsed, ...existing.filter((recipe) => recipe.profileId === parsed.profileId)].slice(0, MAX_SAVED_RECIPES_PER_PROFILE);
+  const otherProfileRecipes = existing.filter((recipe) => recipe.profileId !== parsed.profileId);
+  saveSavedRecipes([...selectedProfileRecipes, ...otherProfileRecipes]);
 }
 
-export function removeSavedRecipe(id: string) {
-  saveSavedRecipes(loadSavedRecipes().filter((recipe) => recipe.id !== id));
+export function removeSavedRecipe(id: string, profileId = getSelectedRecipeProfileId()) {
+  saveSavedRecipes(loadAllSavedRecipes().filter((recipe) => !(recipe.id === id && recipe.profileId === profileId)));
+}
+
+export function isRecipeSaved(id: string, profileId = getSelectedRecipeProfileId()) {
+  return loadAllSavedRecipes().some((recipe) => recipe.id === id && recipe.profileId === profileId);
 }
 
 export function findRecipeById(id: string): RecipeRecord | SavedRecipe | undefined {
-  return [...loadSavedRecipes(), ...loadGeneratedRecipes()].find((record) => record.id === id) ?? findCatalogRecipeById(id);
+  return [...loadAllSavedRecipes(), ...loadGeneratedRecipes()].find((record) => record.id === id) ?? findCatalogRecipeById(id);
 }
 
 function parseFinderSearch(value: unknown): FinderSearch | undefined {
@@ -114,8 +196,8 @@ function finderSearchKey(search: FinderSearch) {
     mainIngredient: search.mainIngredient.trim().toLowerCase(),
     availableIngredients: search.availableIngredients.trim().toLowerCase(),
     servings: Number(search.servings),
-    extraNotes: search.extraNotes.trim().toLowerCase(),
     kosherForPassover: search.kosherForPassover,
+    cookingDevice: search.cookingDevice,
     maxCaloriesPerServing: search.maxCaloriesPerServing,
     maxTotalTimeMinutes: search.maxTotalTimeMinutes
   });

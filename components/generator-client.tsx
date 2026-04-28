@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Clock, Dice5, Flame, Search, Shuffle, Sparkles, UsersRound } from "lucide-react";
 import { RecipeImage } from "@/components/recipe/recipe-image";
@@ -16,14 +17,23 @@ import {
   appendSuggestion,
   availableIngredientSuggestions,
   cuisineSuggestions,
-  extraNoteSuggestions,
   filterSuggestionsForProfile,
   mainIngredientSuggestions,
   occasionSuggestions,
   type Suggestion
 } from "@/lib/generator-suggestions";
+import { finderSearchFromSearchParams, finderSearchToSearchParams } from "@/lib/finder-url";
 import { pickRandomCatalogRecipe, searchCatalogRecipes, type CatalogRecipeRecord } from "@/lib/catalog";
-import { FIXED_SAFETY_PROFILE, generationRequestSchema, type FinderSearch, type Recipe } from "@/lib/schemas";
+import {
+  COOKING_DEVICE_LABELS,
+  COOKING_DEVICE_VALUES,
+  FIXED_SAFETY_PROFILE,
+  finderSearchSchema,
+  generationRequestSchema,
+  type CookingDevice,
+  type FinderSearch,
+  type Recipe
+} from "@/lib/schemas";
 import { findRecipeById, loadFinderDraft, loadRecentSearches, saveFinderDraft, saveRecentSearch } from "@/lib/storage";
 import { cn, formatMinutes, titleCase } from "@/lib/utils";
 import { validateRecipeSafety } from "@/lib/validators/forbidden-ingredients";
@@ -59,6 +69,7 @@ function summarizeSearch(search: FinderSearch) {
   const parts = [
     search.recipeName || search.mainIngredient || "Meal ideas",
     search.kosherForPassover ? "Passover" : "",
+    search.cookingDevice !== "any" ? COOKING_DEVICE_LABELS[search.cookingDevice] : "",
     search.maxCaloriesPerServing ? `<=${search.maxCaloriesPerServing} cal` : "",
     search.maxTotalTimeMinutes ? `<=${search.maxTotalTimeMinutes} min` : "",
     search.cuisinePreference,
@@ -69,14 +80,6 @@ function summarizeSearch(search: FinderSearch) {
 }
 
 const VIEWED_CATALOG_IDS_KEY = "koshertable.viewedCatalogIds.v1";
-
-function normalizeTitle(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function loadViewedCatalogIds() {
   try {
@@ -89,11 +92,6 @@ function loadViewedCatalogIds() {
 function rememberViewedCatalogId(id: string) {
   const next = [id, ...loadViewedCatalogIds().filter((existingId) => existingId !== id)].slice(0, 30);
   window.sessionStorage.setItem(VIEWED_CATALOG_IDS_KEY, JSON.stringify(next));
-}
-
-function exactTitleRequested(record: CatalogRecipeRecord, recipeName: string) {
-  const queryTitle = normalizeTitle(recipeName);
-  return Boolean(queryTitle && normalizeTitle(record.recipe.title) === queryTitle);
 }
 
 const calorieFilters = [
@@ -141,6 +139,35 @@ function LimitChips({
               )}
             >
               {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DeviceChips({ value, onChange }: { value: CookingDevice; onChange: (value: CookingDevice) => void }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Cooking device</p>
+      <div className="flex flex-wrap gap-2">
+        {COOKING_DEVICE_VALUES.map((device) => {
+          const active = device === value;
+          return (
+            <button
+              key={device}
+              type="button"
+              onClick={() => onChange(device)}
+              aria-pressed={active}
+              className={cn(
+                "min-h-8 rounded-md border px-3 py-1 text-xs font-semibold transition-colors focus-ring",
+                active
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-input bg-background text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
+              )}
+            >
+              {COOKING_DEVICE_LABELS[device]}
             </button>
           );
         })}
@@ -207,9 +234,14 @@ function RecipeMatchCard({
   );
 }
 
-export function GeneratorClient() {
+type GeneratorClientProps = {
+  mode?: "brief" | "matches";
+};
+
+export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamString = searchParams.toString();
   const variationId = searchParams.get("variation");
   const profile = FIXED_SAFETY_PROFILE;
   const [recipeName, setRecipeName] = useState("");
@@ -218,8 +250,8 @@ export function GeneratorClient() {
   const [mainIngredient, setMainIngredient] = useState("chicken, salmon, eggs, or seasonal vegetables");
   const [availableIngredients, setAvailableIngredients] = useState("");
   const [servings, setServings] = useState("2");
-  const [extraNotes, setExtraNotes] = useState("");
   const [kosherForPassover, setKosherForPassover] = useState(false);
+  const [cookingDevice, setCookingDevice] = useState<CookingDevice>("any");
   const [maxCaloriesPerServing, setMaxCaloriesPerServing] = useState<number | undefined>();
   const [maxTotalTimeMinutes, setMaxTotalTimeMinutes] = useState<number | undefined>();
   const [variationOf, setVariationOf] = useState<Recipe | undefined>();
@@ -235,8 +267,8 @@ export function GeneratorClient() {
     setMainIngredient(search.mainIngredient);
     setAvailableIngredients(search.availableIngredients);
     setServings(String(search.servings));
-    setExtraNotes(search.extraNotes);
     setKosherForPassover(search.kosherForPassover);
+    setCookingDevice(search.cookingDevice);
     setMaxCaloriesPerServing(search.maxCaloriesPerServing);
     setMaxTotalTimeMinutes(search.maxTotalTimeMinutes);
     setVariationOf(undefined);
@@ -244,26 +276,39 @@ export function GeneratorClient() {
 
   useEffect(() => {
     setRecentSearches(loadRecentSearches());
+    const urlSearch = finderSearchFromSearchParams(new URLSearchParams(searchParamString));
 
-    if (!variationId) {
-      const draft = loadFinderDraft();
-      if (draft) applyFinderSearch(draft);
+    if (urlSearch) {
+      applyFinderSearch(urlSearch);
+    }
+
+    if (variationId) {
+      const record = findRecipeById(variationId);
+      if (record) {
+        setVariationOf(record.recipe);
+        if (!urlSearch) {
+          setRecipeName("");
+          setOccasion("Variation request");
+          setCuisinePreference("Keep the same spirit, change the details");
+          setMainIngredient(record.recipe.ingredients[0]?.name.replace(/\([^)]*\)/g, "").trim() || "safe seasonal ingredients");
+          setAvailableIngredients("");
+          setKosherForPassover(false);
+          setCookingDevice("any");
+          setMaxCaloriesPerServing(undefined);
+          setMaxTotalTimeMinutes(undefined);
+        }
+      }
       setDraftLoaded(true);
       return;
     }
 
-    const record = findRecipeById(variationId);
-    if (record) {
-      setVariationOf(record.recipe);
-      setRecipeName("");
-      setOccasion("Variation request");
-      setCuisinePreference("Keep the same spirit, change the details");
-      setMainIngredient(record.recipe.ingredients[0]?.name.replace(/\([^)]*\)/g, "").trim() || "safe seasonal ingredients");
-      setAvailableIngredients("");
-      setExtraNotes(`Find a distinct catalog variation of "${record.recipe.title}" while preserving kosher and allergy safety.`);
+    if (!urlSearch) {
+      const draft = loadFinderDraft();
+      if (draft) applyFinderSearch(draft);
     }
+
     setDraftLoaded(true);
-  }, [applyFinderSearch, variationId]);
+  }, [applyFinderSearch, searchParamString, variationId]);
 
   useEffect(() => {
     const storedSeed = window.sessionStorage.getItem("koshertable.finderSeed.v1");
@@ -286,15 +331,15 @@ export function GeneratorClient() {
       mainIngredient,
       availableIngredients,
       servings: Number(servings),
-      extraNotes,
       kosherForPassover,
+      cookingDevice,
       maxCaloriesPerServing,
       maxTotalTimeMinutes
     }),
     [
       availableIngredients,
       cuisinePreference,
-      extraNotes,
+      cookingDevice,
       kosherForPassover,
       mainIngredient,
       maxCaloriesPerServing,
@@ -332,8 +377,23 @@ export function GeneratorClient() {
     setRecentSearches(loadRecentSearches());
   }
 
+  function finderHref(path: "/find" | "/generate", search: FinderSearch) {
+    const params = finderSearchToSearchParams(search);
+    if (variationId) params.set("variation", variationId);
+    const query = params.toString();
+    return query ? `${path}?${query}` : path;
+  }
+
+  function openFind(search: FinderSearch, replace = false) {
+    const href = finderHref("/find", search);
+    if (replace) router.replace(href);
+    else router.push(href);
+  }
+
   function refreshMatches() {
-    setSearchSeed(globalThis.crypto?.randomUUID?.() ?? `${searchSeed}-${Date.now()}`);
+    const nextSeed = globalThis.crypto?.randomUUID?.() ?? `${searchSeed}-${Date.now()}`;
+    window.sessionStorage.setItem("koshertable.finderSeed.v1", nextSeed);
+    setSearchSeed(nextSeed);
   }
 
   function clearLimits() {
@@ -357,7 +417,7 @@ export function GeneratorClient() {
     openRecipe(match);
   }
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  function submitBrief(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
@@ -368,8 +428,8 @@ export function GeneratorClient() {
       mainIngredient,
       availableIngredients,
       servings: Number(servings),
-      extraNotes,
       kosherForPassover,
+      cookingDevice,
       maxCaloriesPerServing,
       maxTotalTimeMinutes,
       variationOf
@@ -380,111 +440,110 @@ export function GeneratorClient() {
       return;
     }
 
-    const nextSeed = globalThis.crypto?.randomUUID?.() ?? `${searchSeed}-${Date.now()}`;
-    const pool = searchCatalogRecipes(request.data, 18, { seed: nextSeed, varyWithinTopMatches: true, poolSize: 24 });
-    const safePool = pool.filter((record) => validateRecipeSafety(record.recipe, profile).ok);
-    const exactMatch = safePool.find((match) => exactTitleRequested(match, request.data.recipeName));
+    const nextSearch = finderSearchSchema.parse(request.data);
+    saveFinderDraft(nextSearch);
+    saveRecentSearch(nextSearch);
+    setRecentSearches(loadRecentSearches());
+    openFind(nextSearch);
+  }
 
-    if (safePool.length === 0) {
-      setError("No matching catalog recipe was found.");
-      return;
-    }
+  const matchesSection = (
+    <section className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Recipe matches</h1>
+          <p className="text-muted-foreground">Search nightshade-free, tomato-free kosher meals for two from the bundled catalog.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href={finderHref("/generate", finderSearch)}>
+              <Sparkles />
+              Recipe Brief
+            </Link>
+          </Button>
+          <Button type="button" variant="outline" onClick={refreshMatches}>
+            <Shuffle className="size-4" />
+            Shuffle
+          </Button>
+        </div>
+      </div>
 
-    if (request.data.recipeName && exactMatch) {
-      setSearchSeed(nextSeed);
-    } else {
-      const viewedCatalogIds = new Set(loadViewedCatalogIds());
-      const firstFreshMatch = safePool.find((match) => !viewedCatalogIds.has(match.id));
-      setSearchSeed(`${nextSeed}-${firstFreshMatch?.id ?? safePool[0]?.id ?? "matches"}`);
-    }
+      <Card>
+        <CardHeader>
+          <CardTitle>Find</CardTitle>
+          <CardDescription>{recipeMatches.length} clickable matches from the local catalog.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 rounded-lg border bg-background/65 p-3 sm:grid-cols-2">
+            <LimitChips label="Calories" value={maxCaloriesPerServing} options={calorieFilters} onChange={setMaxCaloriesPerServing} />
+            <LimitChips label="Total time" value={maxTotalTimeMinutes} options={timeFilters} onChange={setMaxTotalTimeMinutes} />
+          </div>
+          {recipeMatches.length > 0 ? (
+            recipeMatches.map((record) => (
+              <RecipeMatchCard
+                key={record.id}
+                record={record}
+                compact
+                onOpen={(match) => {
+                  rememberCurrentSearch();
+                  openRecipe(match);
+                }}
+              />
+            ))
+          ) : (
+            <div className="space-y-3 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+              <p>No matches under those limits. Loosen the search, turn off Passover, or adjust the brief.</p>
+              {maxCaloriesPerServing || maxTotalTimeMinutes ? (
+                <Button type="button" variant="outline" size="sm" onClick={clearLimits}>
+                  Clear calorie/time filters
+                </Button>
+              ) : null}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-    rememberCurrentSearch();
+      {recentSearches.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent searches</CardTitle>
+            <CardDescription>Tap to restore the finder.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {recentSearches.map((search, index) => (
+              <button
+                key={`${summarizeSearch(search)}-${index}`}
+                type="button"
+                onClick={() => {
+                  setError("");
+                  applyFinderSearch(search);
+                  saveFinderDraft(search);
+                  openFind(search, true);
+                }}
+                className="w-full rounded-lg border bg-background p-3 text-left transition-colors hover:bg-secondary focus-ring"
+              >
+                <span className="block text-sm font-semibold">{summarizeSearch(search)}</span>
+                {search.availableIngredients ? (
+                  <span className="mt-1 block text-xs text-muted-foreground line-clamp-2">{search.availableIngredients}</span>
+                ) : null}
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
+    </section>
+  );
+
+  if (mode === "matches") {
+    return <div className="mx-auto max-w-5xl space-y-5">{matchesSection}</div>;
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-      <section className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Find meal ideas</h1>
-        <p className="text-muted-foreground">
-          Search nightshade-free, tomato-free kosher meals for two from the bundled catalog.
-        </p>
-
-        <Card>
-          <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
-            <div>
-              <CardTitle>Recipe matches</CardTitle>
-              <CardDescription>{recipeMatches.length} clickable matches from the local catalog.</CardDescription>
-            </div>
-            <Button type="button" variant="outline" size="sm" onClick={refreshMatches}>
-              <Shuffle className="size-4" />
-              Shuffle
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid gap-3 rounded-lg border bg-background/65 p-3 sm:grid-cols-2">
-              <LimitChips
-                label="Calories"
-                value={maxCaloriesPerServing}
-                options={calorieFilters}
-                onChange={setMaxCaloriesPerServing}
-              />
-              <LimitChips label="Total time" value={maxTotalTimeMinutes} options={timeFilters} onChange={setMaxTotalTimeMinutes} />
-            </div>
-            {recipeMatches.length > 0 ? (
-              recipeMatches.map((record) => (
-                <RecipeMatchCard
-                  key={record.id}
-                  record={record}
-                  compact
-                  onOpen={(match) => {
-                    rememberCurrentSearch();
-                    openRecipe(match);
-                  }}
-                />
-              ))
-            ) : (
-              <div className="space-y-3 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                <p>No matches under those limits. Loosen the search, turn off Passover, or use Surprise Me.</p>
-                {(maxCaloriesPerServing || maxTotalTimeMinutes) ? (
-                  <Button type="button" variant="outline" size="sm" onClick={clearLimits}>
-                    Clear calorie/time filters
-                  </Button>
-                ) : null}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {recentSearches.length > 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent searches</CardTitle>
-              <CardDescription>Tap to restore the finder.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {recentSearches.map((search, index) => (
-                <button
-                  key={`${summarizeSearch(search)}-${index}`}
-                  type="button"
-                  onClick={() => {
-                    setError("");
-                    applyFinderSearch(search);
-                  }}
-                  className="w-full rounded-lg border bg-background p-3 text-left transition-colors hover:bg-secondary focus-ring"
-                >
-                  <span className="block text-sm font-semibold">{summarizeSearch(search)}</span>
-                  {search.availableIngredients || search.extraNotes ? (
-                    <span className="mt-1 block text-xs text-muted-foreground line-clamp-2">
-                      {[search.availableIngredients, search.extraNotes].filter(Boolean).join(" · ")}
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-            </CardContent>
-          </Card>
-        ) : null}
-      </section>
-
+    <div className="mx-auto max-w-3xl space-y-4">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Recipe brief</h1>
+        <p className="text-muted-foreground">Set the meal constraints before opening matching catalog recipes.</p>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -494,7 +553,7 @@ export function GeneratorClient() {
           <CardDescription>Be specific when you care. Use Surprise Me when you do not. Both are valid adult strategies.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-5" onSubmit={submit}>
+          <form className="space-y-5" onSubmit={submitBrief}>
             {error ? (
               <Alert variant="destructive">
                 <AlertCircle className="size-4" />
@@ -510,16 +569,18 @@ export function GeneratorClient() {
               </Alert>
             ) : null}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="recipeName">
-                Search by recipe name
-              </label>
-              <Input
-                id="recipeName"
-                value={recipeName}
-                onChange={(event) => setRecipeName(event.target.value)}
-                placeholder="Try salmon, feta, chicken, couscous..."
-              />
+            <div className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium" htmlFor="kosherForPassover">
+                  Kosher for Passover
+                </label>
+                <p className="text-xs leading-5 text-muted-foreground">Strict mode: no chametz and no kitniyot.</p>
+              </div>
+              <Switch id="kosherForPassover" checked={kosherForPassover} onCheckedChange={setKosherForPassover} aria-label="Kosher for Passover" />
+            </div>
+
+            <div className="rounded-lg border bg-background/65 p-3">
+              <DeviceChips value={cookingDevice} onChange={setCookingDevice} />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -578,18 +639,6 @@ export function GeneratorClient() {
               </div>
             </div>
 
-            <div className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium" htmlFor="kosherForPassover">
-                  Kosher for Passover
-                </label>
-                <p className="text-xs leading-5 text-muted-foreground">
-                  Strict mode: no chametz and no kitniyot.
-                </p>
-              </div>
-              <Switch id="kosherForPassover" checked={kosherForPassover} onCheckedChange={setKosherForPassover} aria-label="Kosher for Passover" />
-            </div>
-
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="availableIngredients">
                 Ingredients on hand or want to include
@@ -598,29 +647,12 @@ export function GeneratorClient() {
                 id="availableIngredients"
                 value={availableIngredients}
                 onChange={(event) => setAvailableIngredients(event.target.value)}
-                placeholder="Carrots, onions, rice, leftover chicken..."
+                placeholder="Carrots, onions, quinoa, fresh herbs..."
               />
               <SuggestionChips
                 label="Ingredients on hand"
                 suggestions={filteredAvailableIngredientSuggestions}
                 onPick={(value) => setAvailableIngredients((current) => appendSuggestion(current, value))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="extraNotes">
-                Extra notes
-              </label>
-              <Textarea
-                id="extraNotes"
-                value={extraNotes}
-                onChange={(event) => setExtraNotes(event.target.value)}
-                placeholder="Low cleanup, make ahead, no cilantro, kid-friendly..."
-              />
-              <SuggestionChips
-                label="Extra notes"
-                suggestions={extraNoteSuggestions}
-                onPick={(value) => setExtraNotes((current) => appendSuggestion(current, value))}
               />
             </div>
 

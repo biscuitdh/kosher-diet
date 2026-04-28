@@ -2,24 +2,33 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChefHat, Plus, Sparkles } from "lucide-react";
+import { RecipeProfileSelector } from "@/components/recipe-profile-selector";
 import { RecipeCard } from "@/components/recipe/recipe-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { withBasePath } from "@/lib/assets";
 import { listCatalogRecipes } from "@/lib/catalog";
-import { loadGeneratedRecipes, loadSavedRecipes } from "@/lib/storage";
-import type { RecipeRecord, SavedRecipe } from "@/lib/schemas";
+import { getSelectedRecipeProfile, loadGeneratedRecipes, loadSavedRecipesForProfile } from "@/lib/storage";
+import type { RecipeProfile, RecipeRecord, SavedRecipe } from "@/lib/schemas";
 
 export function DashboardClient() {
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [generatedRecipes, setGeneratedRecipes] = useState<RecipeRecord[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<RecipeProfile | undefined>();
 
   useEffect(() => {
-    setSavedRecipes(loadSavedRecipes());
+    const profile = getSelectedRecipeProfile();
+    setSelectedProfile(profile);
+    setSavedRecipes(loadSavedRecipesForProfile(profile.id));
     setGeneratedRecipes(loadGeneratedRecipes());
+  }, []);
+
+  const handleProfileChange = useCallback((profile: RecipeProfile) => {
+    setSelectedProfile(profile);
+    setSavedRecipes(loadSavedRecipesForProfile(profile.id));
   }, []);
 
   const catalogRecipes = useMemo(() => listCatalogRecipes().slice(0, 12), []);
@@ -47,7 +56,7 @@ export function DashboardClient() {
           </div>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg">
-              <Link href="/generate">
+              <Link href="/find">
                 <Sparkles />
                 Find Meal Ideas
               </Link>
@@ -74,18 +83,20 @@ export function DashboardClient() {
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold tracking-normal">{showingCatalog ? "Recipe catalog" : "Saved recipes"}</h2>
+            <h2 className="text-2xl font-semibold tracking-normal">{showingCatalog ? "Recipe catalog" : `${selectedProfile?.name ?? "Household"} favorites`}</h2>
             <p className="text-sm text-muted-foreground">
-              {showingCatalog ? "A starter set of meal ideas is ready before anything is saved." : "Cards include kosher type, calories, and meal timing."}
+              {showingCatalog ? "A starter set of meal ideas is ready before anything is favorited." : "Favorites are scoped to the active profile."}
             </p>
           </div>
           <Button asChild variant="outline">
             <Link href="/generate">
               <Plus />
-              New
+              Recipe Brief
             </Link>
           </Button>
         </div>
+
+        <RecipeProfileSelector onProfileChange={handleProfileChange} />
 
         {visibleRecipes.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -106,7 +117,7 @@ export function DashboardClient() {
                 </p>
               </div>
               <Button asChild>
-                <Link href="/generate">Find Meal Ideas</Link>
+                <Link href="/find">Find Meal Ideas</Link>
               </Button>
             </CardContent>
           </Card>

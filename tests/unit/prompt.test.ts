@@ -12,12 +12,13 @@ describe("recipe prompt", () => {
       mainIngredient: "lentils",
       availableIngredients: "carrots, onions, quinoa",
       servings: 4,
-      extraNotes: "",
       kosherForPassover: false,
+      cookingDevice: "pan",
       surpriseMe: false
     });
 
     expect(prompt).toContain("Ingredients on hand or requested inclusions: carrots, onions, quinoa.");
+    expect(prompt).toContain("Cooking device preference: Pan / skillet.");
     expect(prompt).toContain("never override kosher, allergy, nightshade, or tomato restrictions");
   });
 
@@ -30,8 +31,8 @@ describe("recipe prompt", () => {
       mainIngredient: "walleye",
       availableIngredients: "quinoa",
       servings: 2,
-      extraNotes: "",
       kosherForPassover: true,
+      cookingDevice: "any",
       surpriseMe: false
     });
 

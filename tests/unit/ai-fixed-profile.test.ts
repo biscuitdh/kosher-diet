@@ -32,7 +32,6 @@ describe("fixed safety profile enforcement", () => {
       cuisinePreference: "Any",
       mainIngredient: "tomatoes",
       servings: 1,
-      extraNotes: "",
       surpriseMe: false
     });
 
