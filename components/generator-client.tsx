@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Clock, Dice5, Flame, Search, Shuffle, Sparkles, UsersRound } from "lucide-react";
-import { RecipeImage } from "@/components/recipe/recipe-image";
+import { AlertCircle, Clock, Dice5, Flame, Search, Shuffle, UsersRound } from "lucide-react";
+import { RecipeImageFrame } from "@/components/recipe/recipe-image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   availableIngredientSuggestions,
   cuisineSuggestions,
   filterSuggestionsForProfile,
+  getSideSuggestionsForMainIngredient,
   mainIngredientSuggestions,
   occasionSuggestions,
   type Suggestion
@@ -40,26 +41,102 @@ import { validateRecipeSafety } from "@/lib/validators/forbidden-ingredients";
 function SuggestionChips({
   label,
   suggestions,
+  caption,
   onPick
 }: {
   label: string;
   suggestions: Suggestion[];
+  caption?: string;
   onPick: (value: string) => void;
 }) {
   if (suggestions.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 pt-1" aria-label={`${label} suggestions`}>
-      {suggestions.map((suggestion) => (
-        <button
-          key={suggestion.value}
-          type="button"
-          onClick={() => onPick(suggestion.value)}
-          className="min-h-8 rounded-md border border-input bg-background px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground focus-ring"
-        >
-          {suggestion.label}
-        </button>
-      ))}
+    <div className="space-y-1 pt-1">
+      {caption ? <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">{caption}</p> : null}
+      <div className="flex flex-wrap gap-2" aria-label={`${label} suggestions`}>
+        {suggestions.map((suggestion) => (
+          <button
+            key={suggestion.value}
+            type="button"
+            onClick={() => onPick(suggestion.value)}
+            className="min-h-8 rounded-md border border-input bg-background px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground focus-ring"
+          >
+            {suggestion.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const CUSTOM_SELECT_VALUE = "__custom__";
+const DEFAULT_MAIN_INGREDIENT = "chicken, salmon, eggs, or seasonal vegetables";
+
+function isSuggestedValue(value: string, suggestions: readonly Suggestion[]) {
+  return suggestions.some((suggestion) => suggestion.value === value);
+}
+
+function SelectWithCustom({
+  id,
+  label,
+  value,
+  suggestions,
+  custom,
+  customPlaceholder,
+  onChange,
+  onCustomChange
+}: {
+  id: string;
+  label: string;
+  value: string;
+  suggestions: readonly Suggestion[];
+  custom: boolean;
+  customPlaceholder: string;
+  onChange: (value: string) => void;
+  onCustomChange: (custom: boolean) => void;
+}) {
+  const isCustomValue = custom || !isSuggestedValue(value, suggestions);
+  const selectValue = isCustomValue ? CUSTOM_SELECT_VALUE : value;
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium" htmlFor={id}>
+        {label}
+      </label>
+      <Select
+        value={selectValue}
+        onValueChange={(nextValue) => {
+          if (nextValue === CUSTOM_SELECT_VALUE) {
+            onCustomChange(true);
+            return;
+          }
+          if (!isSuggestedValue(nextValue, suggestions)) return;
+          onCustomChange(false);
+          onChange(nextValue);
+        }}
+      >
+        <SelectTrigger id={id}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {suggestions.map((suggestion) => (
+            <SelectItem key={suggestion.value} value={suggestion.value}>
+              {suggestion.label}
+            </SelectItem>
+          ))}
+          <SelectItem value={CUSTOM_SELECT_VALUE}>Custom</SelectItem>
+        </SelectContent>
+      </Select>
+      {isCustomValue ? (
+        <Input
+          aria-label={`Custom ${label.toLowerCase()}`}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={customPlaceholder}
+          className="h-10"
+        />
+      ) : null}
     </div>
   );
 }
@@ -197,9 +274,15 @@ function RecipeMatchCard({
         compact ? "grid-cols-[5.5rem_1fr]" : "sm:grid-cols-[8rem_1fr]"
       )}
     >
-      <div className={cn("relative overflow-hidden bg-muted", compact ? "h-full min-h-24" : "aspect-[4/3] sm:aspect-auto")}>
-        <RecipeImage src={record.imagePath} alt="" width={360} height={270} className="size-full object-cover transition duration-300 group-hover:scale-105" />
-      </div>
+      <RecipeImageFrame
+        src={record.imagePath}
+        alt=""
+        width={360}
+        height={270}
+        data-testid="recipe-match-image-frame"
+        className={cn("relative self-start", compact ? "w-[5.5rem]" : "sm:w-32")}
+        imageClassName="transition duration-300 group-hover:scale-105"
+      />
       <div className="min-w-0 space-y-2 p-3">
         <div className="flex flex-wrap gap-1.5">
           <Badge variant="secondary" className="text-[0.65rem]">
@@ -210,6 +293,9 @@ function RecipeMatchCard({
               Passover
             </Badge>
           ) : null}
+          <Badge variant="outline" className="text-[0.65rem]">
+            {record.catalog.cookingMethod}
+          </Badge>
         </div>
         <p className="line-clamp-2 text-sm font-semibold leading-snug">{record.recipe.title}</p>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -246,7 +332,9 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
   const [recipeName, setRecipeName] = useState("");
   const [occasion, setOccasion] = useState("Weeknight dinner");
   const [cuisinePreference, setCuisinePreference] = useState("Mediterranean");
-  const [mainIngredient, setMainIngredient] = useState("chicken, salmon, eggs, or seasonal vegetables");
+  const [occasionIsCustom, setOccasionIsCustom] = useState(false);
+  const [cuisineIsCustom, setCuisineIsCustom] = useState(false);
+  const [mainIngredient, setMainIngredient] = useState(DEFAULT_MAIN_INGREDIENT);
   const [availableIngredients, setAvailableIngredients] = useState("");
   const [servings, setServings] = useState("2");
   const [kosherForPassover, setKosherForPassover] = useState(false);
@@ -258,11 +346,30 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
   const [searchSeed, setSearchSeed] = useState("initial");
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [recentSearches, setRecentSearches] = useState<FinderSearch[]>([]);
+  const draftSaveTimeoutRef = useRef<number | undefined>(undefined);
+  const matchesSaveTimeoutRef = useRef<number | undefined>(undefined);
+  const draftSaveVersionRef = useRef(0);
+  const matchesSaveVersionRef = useRef(0);
+
+  const clearPendingFinderPersistence = useCallback(() => {
+    draftSaveVersionRef.current += 1;
+    matchesSaveVersionRef.current += 1;
+    if (draftSaveTimeoutRef.current) {
+      window.clearTimeout(draftSaveTimeoutRef.current);
+      draftSaveTimeoutRef.current = undefined;
+    }
+    if (matchesSaveTimeoutRef.current) {
+      window.clearTimeout(matchesSaveTimeoutRef.current);
+      matchesSaveTimeoutRef.current = undefined;
+    }
+  }, []);
 
   const applyFinderSearch = useCallback((search: FinderSearch) => {
     setRecipeName(search.recipeName);
     setOccasion(search.occasion);
     setCuisinePreference(search.cuisinePreference);
+    setOccasionIsCustom(!isSuggestedValue(search.occasion, occasionSuggestions));
+    setCuisineIsCustom(!isSuggestedValue(search.cuisinePreference, cuisineSuggestions));
     setMainIngredient(search.mainIngredient);
     setAvailableIngredients(search.availableIngredients);
     setServings(String(search.servings));
@@ -289,6 +396,8 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
           setRecipeName("");
           setOccasion("Variation request");
           setCuisinePreference("Keep the same spirit, change the details");
+          setOccasionIsCustom(true);
+          setCuisineIsCustom(true);
           setMainIngredient(record.recipe.ingredients[0]?.name.replace(/\([^)]*\)/g, "").trim() || "safe seasonal ingredients");
           setAvailableIngredients("");
           setKosherForPassover(false);
@@ -322,6 +431,10 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
 
   const filteredMainIngredientSuggestions = filterSuggestionsForProfile(mainIngredientSuggestions, profile, { kosherForPassover });
   const filteredAvailableIngredientSuggestions = filterSuggestionsForProfile(availableIngredientSuggestions, profile, { kosherForPassover });
+  const selectedMainIngredient = mainIngredient.trim() === DEFAULT_MAIN_INGREDIENT ? "" : mainIngredient;
+  const sideSuggestions = filterSuggestionsForProfile(getSideSuggestionsForMainIngredient(selectedMainIngredient, { kosherForPassover }), profile, {
+    kosherForPassover
+  });
   const finderSearch = useMemo<FinderSearch>(
     () => ({
       recipeName,
@@ -348,6 +461,7 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
       servings
     ]
   );
+  const hasIncompleteCustomSelect = (occasionIsCustom && !occasion.trim()) || (cuisineIsCustom && !cuisinePreference.trim());
   const catalogQuery = useMemo(
     () => ({
       ...finderSearch,
@@ -366,21 +480,50 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
   );
 
   useEffect(() => {
-    if (!draftLoaded || variationOf) return;
-    const timeout = window.setTimeout(() => saveFinderDraft(finderSearch), 300);
-    return () => window.clearTimeout(timeout);
-  }, [draftLoaded, finderSearch, variationOf]);
+    if (!draftLoaded || variationOf || hasIncompleteCustomSelect) return;
+    const saveVersion = draftSaveVersionRef.current + 1;
+    draftSaveVersionRef.current = saveVersion;
+    draftSaveTimeoutRef.current = window.setTimeout(() => {
+      if (draftSaveVersionRef.current !== saveVersion) return;
+      saveFinderDraft(finderSearch);
+      draftSaveTimeoutRef.current = undefined;
+    }, 300);
+    return () => {
+      draftSaveVersionRef.current += 1;
+      if (draftSaveTimeoutRef.current) {
+        window.clearTimeout(draftSaveTimeoutRef.current);
+        draftSaveTimeoutRef.current = undefined;
+      }
+    };
+  }, [draftLoaded, finderSearch, hasIncompleteCustomSelect, variationOf]);
 
   useEffect(() => {
-    if (!draftLoaded || variationOf || mode !== "matches") return;
-    const timeout = window.setTimeout(() => {
+    if (!draftLoaded || variationOf || mode !== "matches" || hasIncompleteCustomSelect) return;
+    const saveVersion = matchesSaveVersionRef.current + 1;
+    matchesSaveVersionRef.current = saveVersion;
+    matchesSaveTimeoutRef.current = window.setTimeout(() => {
+      if (matchesSaveVersionRef.current !== saveVersion) return;
       saveRecentSearch(finderSearch);
       setRecentSearches(loadRecentSearches());
+      const params = finderSearchToSearchParams(finderSearch);
+      const nextSearchParamString = params.toString();
+      if (nextSearchParamString !== searchParamString && (nextSearchParamString || !searchParamString)) {
+        router.replace(nextSearchParamString ? `/find?${nextSearchParamString}` : "/find", { scroll: false });
+      }
+      matchesSaveTimeoutRef.current = undefined;
     }, 300);
-    return () => window.clearTimeout(timeout);
-  }, [draftLoaded, finderSearch, mode, variationOf]);
+    return () => {
+      matchesSaveVersionRef.current += 1;
+      if (matchesSaveTimeoutRef.current) {
+        window.clearTimeout(matchesSaveTimeoutRef.current);
+        matchesSaveTimeoutRef.current = undefined;
+      }
+    };
+  }, [draftLoaded, finderSearch, hasIncompleteCustomSelect, mode, router, searchParamString, variationOf]);
 
   function rememberCurrentSearch() {
+    clearPendingFinderPersistence();
+    saveFinderDraft(finderSearch);
     saveRecentSearch(finderSearch);
     setRecentSearches(loadRecentSearches());
   }
@@ -449,6 +592,7 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
     }
 
     const nextSearch = finderSearchSchema.parse(request.data);
+    clearPendingFinderPersistence();
     saveFinderDraft(nextSearch);
     saveRecentSearch(nextSearch);
     setRecentSearches(loadRecentSearches());
@@ -457,25 +601,16 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
 
   const matchesSection = (
     <section className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Browse</h1>
-          <p className="text-muted-foreground">Search nightshade-free, tomato-free kosher meals for two from the bundled catalog.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={refreshMatches}>
-            <Shuffle className="size-4" />
-            Shuffle
-          </Button>
-        </div>
+      <h1 className="sr-only">Browse</h1>
+      <div className="flex justify-end">
+        <Button type="button" variant="outline" onClick={refreshMatches}>
+          <Shuffle className="size-4" />
+          Shuffle
+        </Button>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Browse</CardTitle>
-          <CardDescription>{recipeMatches.length} clickable matches from the local catalog.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 p-4 sm:p-5">
           <div className="grid gap-3 rounded-lg border bg-background/65 p-3 lg:grid-cols-3">
             <div className="flex min-h-[5.25rem] items-center justify-between gap-4 rounded-md border border-input bg-background px-3 py-2">
               <div className="space-y-1">
@@ -493,6 +628,9 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
             </div>
             <LimitChips label="Calories" value={maxCaloriesPerServing} options={calorieFilters} onChange={setMaxCaloriesPerServing} />
             <LimitChips label="Total time" value={maxTotalTimeMinutes} options={timeFilters} onChange={setMaxTotalTimeMinutes} />
+            <div className="rounded-md border border-input bg-background p-3 lg:col-span-3">
+              <DeviceChips value={cookingDevice} onChange={setCookingDevice} />
+            </div>
           </div>
           {recipeMatches.length > 0 ? (
             recipeMatches.map((record) => (
@@ -533,6 +671,7 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
                 data-testid="recent-search"
                 onClick={() => {
                   setError("");
+                  clearPendingFinderPersistence();
                   applyFinderSearch(search);
                   saveFinderDraft(search);
                   openFind(search, true);
@@ -557,20 +696,10 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Find</h1>
-        <p className="text-muted-foreground">Set the meal constraints before opening matching catalog recipes.</p>
-      </div>
+      <h1 className="sr-only">Find</h1>
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="size-5 text-primary" />
-            Find
-          </CardTitle>
-          <CardDescription>Be specific when you care. Use Surprise Me when you do not. Both are valid adult strategies.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-5" onSubmit={submitBrief}>
+        <CardContent className="p-4 sm:p-5">
+          <form className="space-y-4" onSubmit={submitBrief}>
             {error ? (
               <Alert variant="destructive">
                 <AlertCircle className="size-4" />
@@ -586,41 +715,40 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
               </Alert>
             ) : null}
 
-            <div className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4">
-              <div className="space-y-1">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3 rounded-lg border bg-background/65 px-3 py-2">
                 <label className="text-sm font-medium" htmlFor="kosherForPassover">
                   Kosher for Passover
                 </label>
-                <p className="text-xs leading-5 text-muted-foreground">Strict mode: no chametz and no kitniyot.</p>
+                <Switch id="kosherForPassover" checked={kosherForPassover} onCheckedChange={setKosherForPassover} aria-label="Kosher for Passover" />
               </div>
-              <Switch id="kosherForPassover" checked={kosherForPassover} onCheckedChange={setKosherForPassover} aria-label="Kosher for Passover" />
-            </div>
-
-            <div className="rounded-lg border bg-background/65 p-3">
-              <DeviceChips value={cookingDevice} onChange={setCookingDevice} />
+              <div className="rounded-lg border bg-background/65 p-3">
+                <DeviceChips value={cookingDevice} onChange={setCookingDevice} />
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="occasion">
-                  Occasion
-                </label>
-                <Input id="occasion" value={occasion} onChange={(event) => setOccasion(event.target.value)} placeholder="Shabbat dinner" />
-                <SuggestionChips label="Occasion" suggestions={occasionSuggestions} onPick={setOccasion} />
-              </div>
+              <SelectWithCustom
+                id="occasion"
+                label="Occasion"
+                value={occasion}
+                suggestions={occasionSuggestions}
+                custom={occasionIsCustom}
+                customPlaceholder="Sunday brunch"
+                onChange={setOccasion}
+                onCustomChange={setOccasionIsCustom}
+              />
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="cuisinePreference">
-                  Cuisine preference
-                </label>
-                <Input
-                  id="cuisinePreference"
-                  value={cuisinePreference}
-                  onChange={(event) => setCuisinePreference(event.target.value)}
-                  placeholder="Sephardi, Ashkenazi, Mediterranean"
-                />
-                <SuggestionChips label="Cuisine" suggestions={cuisineSuggestions} onPick={setCuisinePreference} />
-              </div>
+              <SelectWithCustom
+                id="cuisinePreference"
+                label="Cuisine preference"
+                value={cuisinePreference}
+                suggestions={cuisineSuggestions}
+                custom={cuisineIsCustom}
+                customPlaceholder="Persian, Moroccan, modern kosher..."
+                onChange={setCuisinePreference}
+                onCustomChange={setCuisineIsCustom}
+              />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-[1fr_11rem]">
@@ -635,6 +763,12 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
                   placeholder="Chicken, lentils, mushrooms"
                 />
                 <SuggestionChips label="Main ingredient" suggestions={filteredMainIngredientSuggestions} onPick={setMainIngredient} />
+                <SuggestionChips
+                  label="Suggested sides"
+                  caption="Suggested sides"
+                  suggestions={sideSuggestions}
+                  onPick={(value) => setAvailableIngredients((current) => appendSuggestion(current, value))}
+                />
               </div>
 
               <div className="space-y-2">

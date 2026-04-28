@@ -5,6 +5,7 @@ import {
   recipeRecordSchema,
   recipeSchema,
   COOKING_DEVICE_LABELS,
+  type CookingDevice,
   type GenerationRequest,
   type KosherType,
   type Recipe,
@@ -17,6 +18,8 @@ import { validateRecipeSafety } from "@/lib/validators/forbidden-ingredients";
 const CATALOG_SIZE = 1000;
 const CREATED_AT = "2026-04-26T00:00:00.000Z";
 
+type ConcreteCookingDevice = Exclude<CookingDevice, "any">;
+
 type CatalogMeta = {
   cuisine: string;
   occasion: string;
@@ -24,6 +27,9 @@ type CatalogMeta = {
   base: string;
   imageKey: string;
   kosherForPassover: boolean;
+  primaryCookingDevice: ConcreteCookingDevice;
+  compatibleCookingDevices: ConcreteCookingDevice[];
+  cookingMethod: string;
   keywords: string[];
 };
 
@@ -469,6 +475,195 @@ export function isStrictKosherForPassoverRecipe(recipe: Recipe) {
   return !STRICT_PASSOVER_FORBIDDEN_PATTERNS.some((pattern) => pattern.test(text));
 }
 
+type MethodContext = {
+  base: IngredientTemplate;
+  vegetables: (typeof vegetableSets)[number];
+  flavor: (typeof flavorSets)[number];
+  main: MainTemplate;
+};
+
+type MethodProfile = {
+  compatibleCookingDevices: ConcreteCookingDevice[];
+  familyFit: MainTemplate["family"][];
+  cookTime: (main: MainTemplate, index: number) => number;
+  instructions: [((context: MethodContext) => string[]), ((context: MethodContext) => string[])];
+};
+
+const methodProfiles: Record<ConcreteCookingDevice, MethodProfile> = {
+  pan: {
+    compatibleCookingDevices: ["pan"],
+    familyFit: ["fish", "eggs", "vegetable", "dairy", "nuts", "meat", "soy"],
+    cookTime: (main, index) => (main.family === "meat" ? 22 + (index % 4) * 4 : main.family === "fish" ? 12 + (index % 4) * 3 : 14 + (index % 4) * 3),
+    instructions: [
+      ({ base, vegetables, flavor, main }) => [
+        `Prepare the ${base.title.toLowerCase()} according to package directions, using water and a pinch of kosher salt.`,
+        `Heat olive oil in a wide skillet, then saute the ${vegetables.title.toLowerCase()} until glossy and just tender.`,
+        `Add the ${main.title.toLowerCase()} with the ${flavor.title.toLowerCase()} seasonings; sear and turn until safely done.`,
+        "Fold in the cooked base, taste for salt, and rest for five minutes so the flavors settle.",
+        "Finish with the fresh herb or citrus from the ingredient list and serve warm."
+      ],
+      ({ base, vegetables, flavor, main }) => [
+        `Cook the ${base.title.toLowerCase()} with water and kosher salt until ready to fold through.`,
+        `Set a skillet over medium heat with olive oil, then soften the ${vegetables.title.toLowerCase()} in an even layer.`,
+        `Nestle in the ${main.title.toLowerCase()}, sprinkle with ${flavor.title.toLowerCase()} seasonings, and pan-cook until safely done.`,
+        "Stir the base through the skillet juices and let everything stand briefly off heat.",
+        "Adjust salt, brighten with the listed herb or citrus, and serve warm."
+      ]
+    ]
+  },
+  oven: {
+    compatibleCookingDevices: ["oven"],
+    familyFit: ["fish", "meat", "vegetable", "dairy", "nuts", "soy", "eggs"],
+    cookTime: (main, index) => (main.family === "meat" ? 30 + (index % 4) * 5 : main.family === "fish" ? 16 + (index % 3) * 4 : 22 + (index % 4) * 4),
+    instructions: [
+      ({ base, vegetables, flavor, main }) => [
+        `Prepare the ${base.title.toLowerCase()} with water and kosher salt while the oven heats to 400 F.`,
+        `Toss the ${vegetables.title.toLowerCase()} with olive oil and spread on a parchment-lined sheet pan.`,
+        `Season the ${main.title.toLowerCase()} with ${flavor.title.toLowerCase()}, add it to the pan, and roast until safely done.`,
+        "Fold the roasted vegetables and pan juices through the cooked base.",
+        "Rest for five minutes, finish with the listed herb or citrus, and serve warm."
+      ],
+      ({ base, vegetables, flavor, main }) => [
+        `Cook the ${base.title.toLowerCase()} separately with water and kosher salt.`,
+        `Arrange the ${vegetables.title.toLowerCase()} and ${main.title.toLowerCase()} in a shallow baking dish with olive oil.`,
+        `Dust with ${flavor.title.toLowerCase()} seasonings, bake until tender and safely cooked, then let the dish settle.`,
+        "Spoon the baked mixture over the base and fold gently.",
+        "Taste for salt, add the fresh finish from the ingredient list, and serve warm."
+      ]
+    ]
+  },
+  "slow-cooker": {
+    compatibleCookingDevices: ["slow-cooker"],
+    familyFit: ["meat", "legume", "vegetable"],
+    cookTime: (main, index) => (main.family === "meat" ? 180 + (index % 4) * 30 : 120 + (index % 3) * 20),
+    instructions: [
+      ({ base, vegetables, flavor, main }) => [
+        `Prepare the ${base.title.toLowerCase()} separately near serving time with water and kosher salt.`,
+        `Layer the ${vegetables.title.toLowerCase()} in the crock pot with olive oil and the ${flavor.title.toLowerCase()} seasonings.`,
+        `Add the ${main.title.toLowerCase()}, cover, and slow cook until tender and safely done.`,
+        "Fold the warm base into the slow-cooker juices just before serving.",
+        "Taste for salt, finish with the listed herb or citrus, and serve warm."
+      ],
+      ({ base, vegetables, flavor, main }) => [
+        `Cook the ${base.title.toLowerCase()} separately so it stays distinct.`,
+        `Combine olive oil, ${vegetables.title.toLowerCase()}, ${main.title.toLowerCase()}, and ${flavor.title.toLowerCase()} seasonings in the crock pot.`,
+        "Cover and braise on low until the main ingredient is tender and safely done.",
+        "Spoon the saucy mixture over the cooked base and rest for five minutes.",
+        "Adjust salt and finish with the fresh herb or citrus from the ingredient list."
+      ]
+    ]
+  },
+  "air-fryer": {
+    compatibleCookingDevices: ["air-fryer"],
+    familyFit: ["fish", "meat", "vegetable", "soy", "nuts"],
+    cookTime: (main, index) => (main.family === "meat" ? 18 + (index % 4) * 3 : main.family === "fish" ? 10 + (index % 3) * 3 : 14 + (index % 4) * 3),
+    instructions: [
+      ({ base, vegetables, flavor, main }) => [
+        `Prepare the ${base.title.toLowerCase()} with water and kosher salt while the air fryer preheats.`,
+        `Toss the ${vegetables.title.toLowerCase()} with olive oil and air-fry until lightly crisp at the edges.`,
+        `Season the ${main.title.toLowerCase()} with ${flavor.title.toLowerCase()}, then air-fry until browned and safely done.`,
+        "Fold the crisped vegetables through the base and set the main ingredient on top.",
+        "Finish with the listed herb or citrus and serve warm."
+      ],
+      ({ base, vegetables, flavor, main }) => [
+        `Cook the ${base.title.toLowerCase()} separately with water and kosher salt.`,
+        `Coat the ${vegetables.title.toLowerCase()} and ${main.title.toLowerCase()} lightly with olive oil.`,
+        `Sprinkle with ${flavor.title.toLowerCase()} seasonings and air-fry in batches until crisp-tender and safely cooked.`,
+        "Combine the vegetables with the cooked base and rest briefly.",
+        "Taste for salt, add the fresh finish, and serve the air-fried main ingredient alongside."
+      ]
+    ]
+  },
+  stovetop: {
+    compatibleCookingDevices: ["stovetop"],
+    familyFit: ["fish", "eggs", "legume", "soy", "vegetable", "dairy", "meat"],
+    cookTime: (main, index) => (main.family === "meat" ? 26 + (index % 4) * 4 : main.family === "fish" ? 15 + (index % 4) * 3 : 18 + (index % 4) * 3),
+    instructions: [
+      ({ base, vegetables, flavor, main }) => [
+        `Simmer the ${base.title.toLowerCase()} with water and kosher salt until tender.`,
+        `Warm olive oil in a heavy pot, then cook the ${vegetables.title.toLowerCase()} until fragrant and tender.`,
+        `Stir in the ${main.title.toLowerCase()} and ${flavor.title.toLowerCase()} seasonings; simmer gently until safely done.`,
+        "Fold the base into the pot and let it absorb the seasoned cooking juices.",
+        "Finish with the listed herb or citrus and serve warm."
+      ],
+      ({ base, vegetables, flavor, main }) => [
+        `Start the ${base.title.toLowerCase()} in a covered stovetop pot with water and kosher salt.`,
+        `In a second pot, soften the ${vegetables.title.toLowerCase()} with olive oil.`,
+        `Add the ${main.title.toLowerCase()} and ${flavor.title.toLowerCase()} seasonings, then pot-cook until safely done.`,
+        "Combine with the base and rest covered for five minutes.",
+        "Adjust salt, brighten with the listed fresh finish, and serve warm."
+      ]
+    ]
+  },
+  "instant-pot": {
+    compatibleCookingDevices: ["instant-pot"],
+    familyFit: ["meat", "legume", "soy", "vegetable"],
+    cookTime: (main, index) => (main.family === "meat" ? 34 + (index % 4) * 4 : 18 + (index % 4) * 3),
+    instructions: [
+      ({ base, vegetables, flavor, main }) => [
+        `Prepare the ${base.title.toLowerCase()} separately with water and kosher salt.`,
+        `Use the Instant Pot saute setting to warm olive oil and soften the ${vegetables.title.toLowerCase()}.`,
+        `Add the ${main.title.toLowerCase()}, ${flavor.title.toLowerCase()} seasonings, and a splash of water, then pressure cook until safely done.`,
+        "Release pressure according to the appliance instructions and rest the mixture for five minutes.",
+        "Fold with the cooked base, adjust salt, finish with the listed herb or citrus, and serve warm."
+      ],
+      ({ base, vegetables, flavor, main }) => [
+        `Cook the ${base.title.toLowerCase()} separately so it keeps its texture.`,
+        `Saute the ${vegetables.title.toLowerCase()} in olive oil in the Instant Pot insert.`,
+        `Stir in the ${main.title.toLowerCase()} and ${flavor.title.toLowerCase()} seasonings, then pressure cook until tender and safely done.`,
+        "Let pressure release, then spoon the seasoned mixture over the cooked base.",
+        "Rest briefly, taste for salt, and add the fresh finish from the ingredient list."
+      ]
+    ]
+  }
+};
+
+const devicesByFamily: Record<MainTemplate["family"], ConcreteCookingDevice[]> = {
+  meat: ["slow-cooker", "instant-pot", "oven", "pan", "air-fryer", "stovetop", "slow-cooker"],
+  fish: ["pan", "oven", "air-fryer", "stovetop"],
+  eggs: ["pan", "stovetop", "oven"],
+  soy: ["stovetop", "air-fryer", "pan", "oven", "instant-pot"],
+  legume: ["slow-cooker", "instant-pot", "stovetop", "slow-cooker"],
+  vegetable: ["stovetop", "oven", "air-fryer", "pan", "instant-pot", "slow-cooker", "slow-cooker"],
+  dairy: ["pan", "oven", "stovetop"],
+  nuts: ["oven", "pan", "air-fryer"]
+};
+
+const passoverDevicesByFamily: Partial<Record<MainTemplate["family"], ConcreteCookingDevice[]>> = {
+  meat: ["slow-cooker", "instant-pot", "oven", "pan", "air-fryer", "stovetop", "slow-cooker", "instant-pot"],
+  vegetable: ["slow-cooker", "instant-pot", "oven", "air-fryer", "stovetop", "pan"],
+  fish: ["pan", "oven", "air-fryer", "stovetop"],
+  eggs: ["pan", "stovetop", "oven"],
+  dairy: ["pan", "oven", "stovetop"],
+  nuts: ["oven", "pan", "air-fryer"]
+};
+
+function methodForRecipe(index: number, main: MainTemplate, passoverCandidate: boolean) {
+  const devices = (passoverCandidate && passoverDevicesByFamily[main.family]) || devicesByFamily[main.family];
+  const primaryCookingDevice = devices[(index + Math.floor(index / mains.length)) % devices.length];
+  const profile = methodProfiles[primaryCookingDevice];
+  if (!profile.familyFit.includes(main.family)) {
+    throw new Error(`Unsupported ${primaryCookingDevice} catalog method for ${main.family}`);
+  }
+
+  return {
+    primaryCookingDevice,
+    compatibleCookingDevices: profile.compatibleCookingDevices,
+    cookingMethod: COOKING_DEVICE_LABELS[primaryCookingDevice],
+    profile,
+    variant: Math.floor(index / devices.length) % profile.instructions.length
+  };
+}
+
+function isPassoverCandidate(main: MainTemplate, base: IngredientTemplate, vegetables: (typeof vegetableSets)[number], flavor: (typeof flavorSets)[number]) {
+  return (
+    !["soy", "legume"].includes(main.family) &&
+    passoverBaseTitles.has(base.title) &&
+    passoverVegetableTitles.has(vegetables.title) &&
+    passoverFlavorTitles.has(flavor.title)
+  );
+}
+
 function ingredient(template: IngredientTemplate): RecipeIngredient {
   return {
     name: template.ingredient,
@@ -509,8 +704,9 @@ function buildRecipe(index: number): CatalogRecipeRecord {
     vegetables = passoverVegetableSets[index % passoverVegetableSets.length];
     flavor = passoverFlavors[index % passoverFlavors.length];
   }
+  const method = methodForRecipe(index, main, isPassoverCandidate(main, base, vegetables, flavor));
   const prepTimeMinutes = 8 + (index % 4) * 3;
-  const cookTimeMinutes = main.family === "meat" ? 24 + (index % 5) * 4 : main.family === "fish" ? 18 + (index % 4) * 3 : 16 + (index % 5) * 3;
+  const cookTimeMinutes = method.profile.cookTime(main, index);
   const title = `${cuisine.prefix} ${flavor.title} ${main.title} with ${base.title} and ${vegetables.title}`;
   const oil = simpleIngredient("Extra virgin olive oil (parve)", "1 1/2", "tbsp", "extra virgin olive oil", groceryStores, 180, true);
   const salt = simpleIngredient("Kosher salt (parve)", "3/4", "tsp", "kosher salt", groceryStores, 0, true);
@@ -522,6 +718,7 @@ function buildRecipe(index: number): CatalogRecipeRecord {
     simpleIngredient(item, itemIndex === 0 ? "1 1/2" : "1", itemIndex === 0 ? "tsp" : "tbsp", flavor.shopping[itemIndex] ?? item.replace(/\([^)]*\)/g, "").trim())
   );
   const estimatedCaloriesPerServing = Math.round((main.calories + base.calories + vegetables.calories + flavor.calories + oil.calories) / 2 / 10) * 10;
+  const instructions = method.profile.instructions[method.variant]({ base, vegetables, flavor, main });
 
   const recipe: Recipe = recipeSchema.parse({
     title,
@@ -535,13 +732,7 @@ function buildRecipe(index: number): CatalogRecipeRecord {
       ingredient(salt),
       ingredient(water)
     ],
-    instructions: [
-      `Prepare the ${base.title.toLowerCase()} according to package directions, using water and a pinch of kosher salt.`,
-      `Warm olive oil in a wide pan, then cook the ${vegetables.title.toLowerCase()} until glossy and just tender.`,
-      `Add the ${main.title.toLowerCase()} and ${flavor.title.toLowerCase()} seasonings; cook until the main ingredient is safely done.`,
-      "Fold in the cooked base, taste for salt, and rest for five minutes so the flavors settle.",
-      "Finish with the fresh herb or citrus from the ingredient list and serve warm."
-    ],
+    instructions,
     prepTimeMinutes,
     cookTimeMinutes,
     servings: 2,
@@ -583,10 +774,16 @@ function buildRecipe(index: number): CatalogRecipeRecord {
       base: base.title,
       imageKey: recipeImage.key,
       kosherForPassover,
+      primaryCookingDevice: method.primaryCookingDevice,
+      compatibleCookingDevices: method.compatibleCookingDevices,
+      cookingMethod: method.cookingMethod,
       keywords: [
         cuisine.name,
         cuisine.prefix,
         occasion,
+        method.primaryCookingDevice,
+        method.cookingMethod,
+        ...method.compatibleCookingDevices,
         kosherForPassover ? "kosher for passover" : "",
         kosherForPassover ? "pesach" : "",
         kosherForPassover ? "no kitniyot" : "",
@@ -635,6 +832,9 @@ function recordText(record: CatalogRecipeRecord) {
     record.catalog.occasion,
     record.catalog.main,
     record.catalog.base,
+    record.catalog.cookingMethod,
+    record.catalog.primaryCookingDevice,
+    ...record.catalog.compatibleCookingDevices,
     ...record.catalog.keywords,
     ...record.recipe.ingredients.flatMap((item) => [item.name, item.shoppingName ?? "", item.substitutionNote ?? ""]),
     ...record.recipe.instructions
@@ -649,6 +849,23 @@ function titleScore(record: CatalogRecipeRecord, recipeName?: string) {
   if (title.includes(query)) return 700;
   return terms(recipeName).reduce((score, term) => score + (title.includes(term) ? 32 : 0), 0);
 }
+
+function isConcreteCookingDevice(device?: CookingDevice): device is ConcreteCookingDevice {
+  return Boolean(device && device !== "any");
+}
+
+function isDeviceCompatible(record: CatalogRecipeRecord, device: ConcreteCookingDevice) {
+  return record.catalog.compatibleCookingDevices.includes(device);
+}
+
+const nearCookingDevices: Record<ConcreteCookingDevice, ConcreteCookingDevice[]> = {
+  pan: ["stovetop", "oven"],
+  oven: ["air-fryer", "pan"],
+  "slow-cooker": ["instant-pot", "stovetop"],
+  "air-fryer": ["oven", "pan"],
+  stovetop: ["pan", "instant-pot"],
+  "instant-pot": ["slow-cooker", "stovetop"]
+};
 
 function scoreRecipe(record: CatalogRecipeRecord, query: CatalogQuery) {
   const text = recordText(record);
@@ -666,30 +883,12 @@ function scoreRecipe(record: CatalogRecipeRecord, query: CatalogQuery) {
   for (const term of terms(query.availableIngredients)) {
     if (text.includes(term)) score += 14;
   }
-  if (query.cookingDevice && query.cookingDevice !== "any") {
+  if (isConcreteCookingDevice(query.cookingDevice)) {
+    if (record.catalog.primaryCookingDevice === query.cookingDevice) score += 90;
+    else if (isDeviceCompatible(record, query.cookingDevice)) score += 70;
+    else if (nearCookingDevices[query.cookingDevice].includes(record.catalog.primaryCookingDevice)) score += 18;
+
     const deviceLabel = COOKING_DEVICE_LABELS[query.cookingDevice].toLowerCase();
-    const keywordsByDevice: Record<Exclude<GenerationRequest["cookingDevice"], "any">, string[]> = {
-      pan: ["pan", "skillet", "saute"],
-      oven: ["oven", "roast", "bake"],
-      "slow-cooker": ["slow cooker", "crock pot", "braise", "stew"],
-      "air-fryer": ["air fryer", "crisp", "roast"],
-      stovetop: ["stovetop", "pan", "pot"],
-      "instant-pot": ["instant pot", "pressure cooker", "pot"]
-    };
-    const familyHints: Record<Exclude<GenerationRequest["cookingDevice"], "any">, string[]> = {
-      pan: ["fish", "eggs", "vegetable", "dairy"],
-      oven: ["fish", "meat", "vegetable"],
-      "slow-cooker": ["meat", "legume"],
-      "air-fryer": ["fish", "meat", "vegetable"],
-      stovetop: ["fish", "eggs", "legume", "soy", "vegetable", "dairy"],
-      "instant-pot": ["meat", "legume", "soy"]
-    };
-    for (const keyword of keywordsByDevice[query.cookingDevice]) {
-      if (text.includes(keyword)) score += 14;
-    }
-    for (const hint of familyHints[query.cookingDevice]) {
-      if (record.catalog.keywords.includes(hint)) score += 11;
-    }
     if (text.includes(deviceLabel)) score += 20;
   }
   if (query.servings && record.recipe.servings === Number(query.servings)) {
@@ -733,6 +932,16 @@ function rankedCatalogRecipes(query: CatalogQuery = {}) {
     .sort((a, b) => b.score - a.score || a.record.recipe.title.localeCompare(b.record.recipe.title));
 }
 
+function orderForCookingDevice(ranked: ReturnType<typeof rankedCatalogRecipes>, query: CatalogQuery, options: CatalogSearchOptions) {
+  if (!isConcreteCookingDevice(query.cookingDevice)) return applyVariety(ranked, query, options);
+
+  const cookingDevice = query.cookingDevice;
+  const exactMatches = ranked.filter(({ record }) => isDeviceCompatible(record, cookingDevice));
+  const fallbackMatches = ranked.filter(({ record }) => !isDeviceCompatible(record, cookingDevice));
+
+  return [...applyVariety(exactMatches, query, options), ...applyVariety(fallbackMatches, query, options)];
+}
+
 function hasExactTitleQuery(query: CatalogQuery, ranked: ReturnType<typeof rankedCatalogRecipes>) {
   const queryTitle = normalize(query.recipeName);
   return Boolean(queryTitle && ranked[0] && normalize(ranked[0].record.recipe.title) === queryTitle);
@@ -763,7 +972,7 @@ export function findCatalogRecipeById(id: string) {
 }
 
 export function searchCatalogRecipes(query: CatalogQuery = {}, limit = 24, options: CatalogSearchOptions = {}) {
-  return applyVariety(rankedCatalogRecipes(query), query, options)
+  return orderForCookingDevice(rankedCatalogRecipes(query), query, options)
     .slice(0, limit)
     .map(({ record }) => record);
 }

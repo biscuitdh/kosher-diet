@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, ChefHat, Home, Search, Sparkles } from "lucide-react";
+import { BookOpen, ChefHat, Heart, Search, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +11,13 @@ import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/generate", label: "Find", icon: Sparkles },
-  { href: "/find", label: "Browse", icon: BookOpen }
+  { href: "/", label: "Find", icon: Sparkles },
+  { href: "/find", label: "Browse", icon: BookOpen },
+  { href: "/favorites", label: "Favorites", icon: Heart }
 ];
 
 function isActiveNav(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
+  if (href === "/") return pathname === "/" || pathname.startsWith("/generate");
   return pathname.startsWith(href);
 }
 
@@ -26,8 +26,11 @@ function HeaderRecipeSearch() {
   const searchParams = useSearchParams();
   const currentRecipeName = searchParams.get("recipeName") ?? "";
   const [query, setQuery] = useState(currentRecipeName);
+  const previousRecipeName = useRef(currentRecipeName);
 
   useEffect(() => {
+    if (previousRecipeName.current === currentRecipeName) return;
+    previousRecipeName.current = currentRecipeName;
     setQuery(currentRecipeName);
   }, [currentRecipeName]);
 
@@ -63,7 +66,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(231,161,87,0.16),transparent_32rem),linear-gradient(180deg,hsl(var(--background)),hsl(var(--background)))]">
       <header className="sticky top-0 z-40 border-b bg-background/88 backdrop-blur">
         <div className="container flex min-h-16 flex-wrap items-center justify-between gap-3 py-3 md:flex-nowrap">
-          <Link href="/" className="order-1 mr-auto flex min-w-0 items-center gap-2 font-semibold md:mr-0" aria-label={`${APP_NAME} home`}>
+          <div className="order-1 shrink-0">
+            <ThemeToggle />
+          </div>
+
+          <Link href="/" className="order-2 mr-auto flex min-w-0 items-center gap-2 font-semibold md:mr-0" aria-label={`${APP_NAME} home`}>
             <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <ChefHat className="size-5" />
             </span>
@@ -88,10 +95,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-
-          <div className="order-2 md:order-none">
-            <ThemeToggle />
-          </div>
         </div>
       </header>
 

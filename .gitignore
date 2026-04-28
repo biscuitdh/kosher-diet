@@ -2,7 +2,10 @@
 node_modules
 
 # Next.js
+.build-workspaces
 .next
+.next-export
+.next-build-check
 out
 tsconfig.tsbuildinfo
 

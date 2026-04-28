@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { isCatalogRecipeImagePath, resolveCatalogRecipeImagePath } from "@/lib/catalog-images";
+import { isCatalogRecipeImagePath, listCatalogRecipeImageManifest, resolveCatalogRecipeImagePath } from "@/lib/catalog-images";
 import {
   findBestCatalogRecipe,
   findCatalogRecipeById,
@@ -10,8 +10,25 @@ import {
   searchCatalogRecipes
 } from "@/lib/catalog";
 import { findRecipeImageAssetByKey, listRecipeImageAssets, rankRecipeImageAssets, type RecipeImageAsset } from "@/lib/recipe-images";
-import { FIXED_SAFETY_PROFILE, recipeSchema } from "@/lib/schemas";
+import { COOKING_DEVICE_VALUES, FIXED_SAFETY_PROFILE, recipeSchema, type CookingDevice } from "@/lib/schemas";
 import { validateRecipeSafety } from "@/lib/validators/forbidden-ingredients";
+
+const concreteCookingDevices = COOKING_DEVICE_VALUES.filter((device): device is Exclude<CookingDevice, "any"> => device !== "any");
+
+function methodPattern(record: ReturnType<typeof listCatalogRecipes>[number]) {
+  return record.recipe.instructions
+    .map((step) =>
+      step
+        .toLowerCase()
+        .replace(record.catalog.main.toLowerCase(), "{main}")
+        .replace(record.catalog.base.toLowerCase(), "{base}")
+        .replace(/\b(?:carrots and zucchini|fennel and celery|squash and kale|cabbage and mushrooms|green beans and leeks|beets and parsnips|broccoli and cauliflower|mushrooms and leeks)\b/g, "{vegetables}")
+        .replace(/\b(?:lemon herb|cumin turmeric|dill lemon|ginger cinnamon|rosemary thyme|sumac parsley|cardamom cumin|mint lime|garlic oregano|caraway dill|tahini lemon)\b/g, "{flavor}")
+        .replace(/\s+/g, " ")
+        .trim()
+    )
+    .join(" | ");
+}
 
 describe("recipe catalog", () => {
   it("contains 1,000 schema-valid recipes", () => {
@@ -41,16 +58,26 @@ describe("recipe catalog", () => {
 
   it("maps catalog recipes to local dish-aware image assets", () => {
     const assets = listRecipeImageAssets();
+    const catalogImageManifest = listCatalogRecipeImageManifest();
+    const catalogRecipeIds = new Set(listCatalogRecipes().map((record) => record.id));
     const walleyeRecipes = listCatalogRecipes().filter((record) => record.recipe.title.toLowerCase().includes("walleye"));
     const passoverRecipes = listCatalogRecipes().filter((record) => record.catalog.kosherForPassover);
 
     expect(assets.length).toBeGreaterThanOrEqual(80);
     expect(assets.length).toBeLessThanOrEqual(120);
+    expect(Object.keys(catalogImageManifest)).toHaveLength(1000);
 
     for (const record of listCatalogRecipes()) {
       expect(/^\/images\/recipes\/(?:real|ai|catalog)\//.test(record.imagePath), record.recipe.title).toBe(true);
       expect(existsSync(join(process.cwd(), "public", record.imagePath)), record.imagePath).toBe(true);
       expect(findRecipeImageAssetByKey(record.catalog.imageKey), record.catalog.imageKey).toBeDefined();
+      expect(catalogImageManifest[record.id], record.id).toBe(record.imagePath);
+    }
+
+    for (const [recipeId, imagePath] of Object.entries(catalogImageManifest)) {
+      expect(catalogRecipeIds.has(recipeId), recipeId).toBe(true);
+      expect(isCatalogRecipeImagePath(imagePath), imagePath).toBe(true);
+      expect(existsSync(join(process.cwd(), "public", imagePath)), imagePath).toBe(true);
     }
 
     for (const record of walleyeRecipes) {
@@ -219,12 +246,57 @@ describe("recipe catalog", () => {
     }
   });
 
-  it("boosts matches compatible with the selected cooking device without hard filtering", () => {
-    const slowCookerMatches = searchCatalogRecipes({ cookingDevice: "slow-cooker" }, 12);
-    const airFryerMatches = searchCatalogRecipes({ cookingDevice: "air-fryer" }, 12);
+  it("orders exact cooking-device matches before fallback matches", () => {
+    const airFryerMatches = searchCatalogRecipes({ cookingDevice: "air-fryer" }, 18);
+    const sparseSlowCookerMatches = searchCatalogRecipes(
+      {
+        cookingDevice: "slow-cooker",
+        mainIngredient: "walleye",
+        kosherForPassover: true,
+        maxCaloriesPerServing: 400,
+        maxTotalTimeMinutes: 45
+      },
+      18
+    );
 
-    expect(slowCookerMatches.some((match) => match.catalog.keywords.includes("meat") || match.catalog.keywords.includes("legume"))).toBe(true);
-    expect(airFryerMatches.some((match) => match.catalog.keywords.includes("fish") || match.catalog.keywords.includes("vegetable"))).toBe(true);
+    expect(airFryerMatches).toHaveLength(18);
+    expect(airFryerMatches.every((match) => match.catalog.compatibleCookingDevices.includes("air-fryer"))).toBe(true);
+    expect(sparseSlowCookerMatches).toHaveLength(18);
+    expect(sparseSlowCookerMatches.some((match) => !match.catalog.compatibleCookingDevices.includes("slow-cooker"))).toBe(true);
+  });
+
+  it("combines cooking-device, Passover, calorie, and time filters", () => {
+    const matches = searchCatalogRecipes(
+      {
+        cookingDevice: "instant-pot",
+        kosherForPassover: true,
+        maxCaloriesPerServing: 700,
+        maxTotalTimeMinutes: 65
+      },
+      12
+    );
+
+    expect(matches.length).toBeGreaterThan(0);
+    expect(matches.every((match) => match.catalog.compatibleCookingDevices.includes("instant-pot"))).toBe(true);
+    for (const match of matches) {
+      expect(match.catalog.kosherForPassover, match.recipe.title).toBe(true);
+      expect(match.recipe.estimatedCaloriesPerServing ?? 0, match.recipe.title).toBeLessThanOrEqual(700);
+      expect(match.recipe.prepTimeMinutes + match.recipe.cookTimeMinutes, match.recipe.title).toBeLessThanOrEqual(65);
+    }
+  });
+
+  it("keeps generated catalog method coverage and instruction diversity balanced", () => {
+    const records = listCatalogRecipes();
+
+    for (const device of concreteCookingDevices) {
+      const primaryMatches = records.filter((record) => record.catalog.primaryCookingDevice === device);
+      const passoverPrimaryMatches = primaryMatches.filter((record) => record.catalog.kosherForPassover);
+      const instructionPatterns = new Set(primaryMatches.map(methodPattern));
+
+      expect(primaryMatches.length, `${device} total coverage`).toBeGreaterThanOrEqual(60);
+      expect(passoverPrimaryMatches.length, `${device} Passover coverage`).toBeGreaterThanOrEqual(12);
+      expect(instructionPatterns.size, `${device} instruction patterns`).toBeGreaterThanOrEqual(2);
+    }
   });
 
   it("ranks recipe title search above generic matches", () => {

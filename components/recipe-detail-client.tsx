@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Check, Clock, Copy, ExternalLink, Flame, Heart, RefreshCw, ShoppingCart, UsersRound } from "lucide-react";
 import { RecipeProfileSelector } from "@/components/recipe-profile-selector";
-import { RecipeImage } from "@/components/recipe/recipe-image";
+import { RecipeImageFrame } from "@/components/recipe/recipe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,17 +117,16 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
         </Link>
       </Button>
 
-      <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-        <div className="mx-auto w-full max-w-[26rem] overflow-hidden rounded-lg border bg-card shadow-soft lg:mx-0">
-          <RecipeImage
-            src={record.imagePath}
-            alt=""
-            width={320}
-            height={240}
-            priority
-            className="block aspect-[4/3] h-auto w-full object-cover"
-          />
-        </div>
+      <section className="grid items-start gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+        <RecipeImageFrame
+          src={record.imagePath}
+          alt=""
+          width={640}
+          height={480}
+          priority
+          data-testid="recipe-detail-image-frame"
+          className="mx-auto w-full max-w-[26rem] self-start rounded-lg border bg-card shadow-soft lg:mx-0"
+        />
 
         <div className="space-y-5">
           <div className="flex flex-wrap gap-2">
@@ -165,8 +164,13 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button onClick={toggleSave} size="lg" variant={isSaved ? "secondary" : "default"}>
-              <Heart />
+            <Button
+              onClick={toggleSave}
+              size="lg"
+              variant={isSaved ? "default" : "outline"}
+              aria-pressed={isSaved}
+            >
+              <Heart fill={isSaved ? "currentColor" : "none"} />
               {isSaved ? "Favorited" : "Favorite"}
             </Button>
             <Button asChild variant="outline" size="lg">
