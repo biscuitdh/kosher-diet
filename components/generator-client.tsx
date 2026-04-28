@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Clock, Dice5, Flame, Search, Shuffle, Sparkles, UsersRound } from "lucide-react";
 import { RecipeImage } from "@/components/recipe/recipe-image";
@@ -234,34 +233,6 @@ function RecipeMatchCard({
   );
 }
 
-function FlowTabs({ active, findHref, browseHref }: { active: "find" | "browse"; findHref: string; browseHref: string }) {
-  const tabs = [
-    { id: "find", label: "Find", href: findHref },
-    { id: "browse", label: "Browse", href: browseHref }
-  ] as const;
-
-  return (
-    <nav className="flex w-full rounded-lg border bg-background/70 p-1" aria-label="Recipe flow">
-      {tabs.map((tab) => {
-        const isActive = tab.id === active;
-        return (
-          <Link
-            key={tab.id}
-            href={tab.href}
-            aria-current={isActive ? "page" : undefined}
-            className={cn(
-              "flex min-h-10 flex-1 items-center justify-center rounded-md px-3 text-sm font-semibold transition-colors focus-ring",
-              isActive ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
-            )}
-          >
-            {tab.label}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
 type GeneratorClientProps = {
   mode?: "brief" | "matches";
 };
@@ -400,6 +371,15 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
     return () => window.clearTimeout(timeout);
   }, [draftLoaded, finderSearch, variationOf]);
 
+  useEffect(() => {
+    if (!draftLoaded || variationOf || mode !== "matches") return;
+    const timeout = window.setTimeout(() => {
+      saveRecentSearch(finderSearch);
+      setRecentSearches(loadRecentSearches());
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [draftLoaded, finderSearch, mode, variationOf]);
+
   function rememberCurrentSearch() {
     saveRecentSearch(finderSearch);
     setRecentSearches(loadRecentSearches());
@@ -475,23 +455,14 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
     openFind(nextSearch);
   }
 
-  const flowTabs = <FlowTabs active={mode === "matches" ? "browse" : "find"} findHref={finderHref("/generate", finderSearch)} browseHref={finderHref("/find", finderSearch)} />;
-
   const matchesSection = (
     <section className="space-y-4">
-      {flowTabs}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Browse</h1>
           <p className="text-muted-foreground">Search nightshade-free, tomato-free kosher meals for two from the bundled catalog.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href={finderHref("/generate", finderSearch)}>
-              <Sparkles />
-              Find
-            </Link>
-          </Button>
           <Button type="button" variant="outline" onClick={refreshMatches}>
             <Shuffle className="size-4" />
             Shuffle
@@ -505,7 +476,21 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
           <CardDescription>{recipeMatches.length} clickable matches from the local catalog.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid gap-3 rounded-lg border bg-background/65 p-3 sm:grid-cols-2">
+          <div className="grid gap-3 rounded-lg border bg-background/65 p-3 lg:grid-cols-3">
+            <div className="flex min-h-[5.25rem] items-center justify-between gap-4 rounded-md border border-input bg-background px-3 py-2">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-normal text-muted-foreground" htmlFor="browseKosherForPassover">
+                  Kosher for Passover
+                </label>
+                <p className="text-xs leading-5 text-muted-foreground">Strict no chametz or kitniyot.</p>
+              </div>
+              <Switch
+                id="browseKosherForPassover"
+                checked={kosherForPassover}
+                onCheckedChange={setKosherForPassover}
+                aria-label="Browse kosher for Passover"
+              />
+            </div>
             <LimitChips label="Calories" value={maxCaloriesPerServing} options={calorieFilters} onChange={setMaxCaloriesPerServing} />
             <LimitChips label="Total time" value={maxTotalTimeMinutes} options={timeFilters} onChange={setMaxTotalTimeMinutes} />
           </div>
@@ -523,7 +508,7 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
             ))
           ) : (
             <div className="space-y-3 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-              <p>No matches under those limits. Loosen the search, turn off Passover, or adjust the brief.</p>
+              <p>No matches under those filters. Loosen Passover, calorie, or time filters, or adjust the Find brief.</p>
               {maxCaloriesPerServing || maxTotalTimeMinutes ? (
                 <Button type="button" variant="outline" size="sm" onClick={clearLimits}>
                   Clear calorie/time filters
@@ -545,6 +530,7 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
               <button
                 key={`${summarizeSearch(search)}-${index}`}
                 type="button"
+                data-testid="recent-search"
                 onClick={() => {
                   setError("");
                   applyFinderSearch(search);
@@ -571,7 +557,6 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      {flowTabs}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Find</h1>
         <p className="text-muted-foreground">Set the meal constraints before opening matching catalog recipes.</p>

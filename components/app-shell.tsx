@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChefHat, Home, Search, Sparkles } from "lucide-react";
+import { BookOpen, ChefHat, Home, Search, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,13 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/generate", label: "Find", icon: Sparkles }
+  { href: "/generate", label: "Find", icon: Sparkles },
+  { href: "/find", label: "Browse", icon: BookOpen }
 ];
 
 function isActiveNav(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  return pathname.startsWith(href) || (href === "/generate" && pathname.startsWith("/find"));
+  return pathname.startsWith(href);
 }
 
 function HeaderRecipeSearch() {
@@ -97,7 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="container pb-28 pt-6 sm:pt-8">{children}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/92 backdrop-blur md:hidden" aria-label="Mobile navigation">
-        <div className="grid grid-cols-2">
+        <div className="grid grid-cols-3">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActiveNav(pathname, item.href);
