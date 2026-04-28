@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, ChefHat, Heart, Search, Sparkles } from "lucide-react";
+import { BookOpen, ChefHat, Heart, Search, ShoppingCart, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/", label: "Find", icon: Sparkles },
   { href: "/find", label: "Browse", icon: BookOpen },
-  { href: "/favorites", label: "Favorites", icon: Heart }
+  { href: "/favorites", label: "Favorites", icon: Heart },
+  { href: "/groceries", label: "Groceries", icon: ShoppingCart }
 ];
 
 function isActiveNav(pathname: string, href: string) {
@@ -101,7 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="container pb-28 pt-6 sm:pt-8">{children}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/92 backdrop-blur md:hidden" aria-label="Mobile navigation">
-        <div className="grid grid-cols-3">
+        <div className="grid grid-cols-4">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActiveNav(pathname, item.href);

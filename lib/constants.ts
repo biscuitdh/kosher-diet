@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   generatedRecipes: "koshertable.generatedRecipes.v1",
   recipeProfiles: "koshertable.recipeProfiles.v1",
   selectedRecipeProfileId: "koshertable.selectedRecipeProfileId.v1",
+  groceryItems: "koshertable.groceryItems.v1",
   aiRateLimit: "koshertable.aiRateLimit.v1",
   finderDraft: "koshertable.finderDraft.v1",
   recentSearches: "koshertable.recentSearches.v1"

@@ -2,13 +2,16 @@
 
 import { RECIPE_IMAGE_PLACEHOLDERS, STORAGE_KEYS } from "@/lib/constants";
 import { findCatalogRecipeById } from "@/lib/catalog";
+import { groceryItemFromCustomInput, groceryItemFromIngredient, mergeGroceryItem } from "@/lib/grocery";
 import {
   DEFAULT_RECIPE_PROFILE_ID,
   finderSearchSchema,
+  groceryListItemSchema,
   recipeProfileSchema,
   recipeRecordSchema,
   savedRecipeSchema,
   type FinderSearch,
+  type GroceryListItem,
   type Recipe,
   type RecipeProfile,
   type RecipeRecord,
@@ -181,6 +184,82 @@ export function isRecipeSaved(id: string, profileId = getSelectedRecipeProfileId
 
 export function findRecipeById(id: string): RecipeRecord | SavedRecipe | undefined {
   return [...loadAllSavedRecipes(), ...loadGeneratedRecipes()].find((record) => record.id === id) ?? findCatalogRecipeById(id);
+}
+
+export function loadAllGroceryItems(): GroceryListItem[] {
+  const records = readJson<unknown[]>(STORAGE_KEYS.groceryItems, []);
+  return records.flatMap((record) => {
+    const parsed = groceryListItemSchema.safeParse(record);
+    return parsed.success ? [parsed.data] : [];
+  });
+}
+
+export function loadGroceryItemsForProfile(profileId = getSelectedRecipeProfileId()) {
+  return loadAllGroceryItems().filter((item) => item.profileId === profileId);
+}
+
+export function saveGroceryItems(items: GroceryListItem[]) {
+  writeJson(STORAGE_KEYS.groceryItems, items.map((item) => groceryListItemSchema.parse(item)));
+}
+
+export function upsertGroceryItem(item: GroceryListItem) {
+  const parsed = groceryListItemSchema.parse({ ...item, updatedAt: new Date().toISOString() });
+  const existing = loadAllGroceryItems().filter((groceryItem) => groceryItem.id !== parsed.id);
+  saveGroceryItems([parsed, ...existing]);
+  return parsed;
+}
+
+export function addCustomGroceryItem(input: { displayName: string; quantity?: string; unit?: string }, profileId = getSelectedRecipeProfileId()) {
+  const item = groceryItemFromCustomInput(input, profileId);
+  const existing = loadAllGroceryItems();
+  const match = existing.find((groceryItem) => groceryItem.profileId === item.profileId && groceryItem.ingredientKey === item.ingredientKey);
+  if (!match) {
+    saveGroceryItems([item, ...existing]);
+    return { item, added: 1, updated: 0 };
+  }
+
+  const merged = mergeGroceryItem(match, item);
+  saveGroceryItems([merged, ...existing.filter((groceryItem) => groceryItem.id !== match.id)]);
+  return { item: merged, added: 0, updated: 1 };
+}
+
+export function addRecipeIngredientsToGroceryList(record: RecipeRecord | SavedRecipe, profileId = getSelectedRecipeProfileId()) {
+  const now = new Date().toISOString();
+  let added = 0;
+  let updated = 0;
+  let items = loadAllGroceryItems();
+
+  for (const ingredient of record.recipe.ingredients) {
+    const incoming = groceryItemFromIngredient(ingredient, record, profileId, now);
+    const existing = items.find((item) => item.profileId === profileId && item.ingredientKey === incoming.ingredientKey);
+    if (existing) {
+      const merged = mergeGroceryItem(existing, incoming, now);
+      items = [merged, ...items.filter((item) => item.id !== existing.id)];
+      updated += 1;
+    } else {
+      items = [incoming, ...items];
+      added += 1;
+    }
+  }
+
+  saveGroceryItems(items);
+  return { added, updated, items: loadGroceryItemsForProfile(profileId) };
+}
+
+export function updateGroceryItem(item: GroceryListItem) {
+  return upsertGroceryItem(groceryListItemSchema.parse(item));
+}
+
+export function removeGroceryItem(id: string, profileId = getSelectedRecipeProfileId()) {
+  saveGroceryItems(loadAllGroceryItems().filter((item) => !(item.id === id && item.profileId === profileId)));
+}
+
+export function clearCheckedGroceryItems(profileId = getSelectedRecipeProfileId()) {
+  saveGroceryItems(loadAllGroceryItems().filter((item) => item.profileId !== profileId || !item.checked));
+}
+
+export function clearGroceryItemsForProfile(profileId = getSelectedRecipeProfileId()) {
+  saveGroceryItems(loadAllGroceryItems().filter((item) => item.profileId !== profileId));
 }
 
 function parseFinderSearch(value: unknown): FinderSearch | undefined {

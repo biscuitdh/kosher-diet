@@ -162,6 +162,31 @@ export const savedRecipeSchema = z.object({
 });
 export type SavedRecipe = z.infer<typeof savedRecipeSchema>;
 
+export const grocerySourceRecipeSchema = z.object({
+  recipeId: z.string().trim().min(1).max(160),
+  title: z.string().trim().min(1).max(160)
+});
+export type GrocerySourceRecipe = z.infer<typeof grocerySourceRecipeSchema>;
+
+export const groceryListItemSchema = z.object({
+  id: z.string().trim().min(1).max(180),
+  profileId: z.string().trim().min(1).default(DEFAULT_RECIPE_PROFILE_ID),
+  ingredientKey: z.string().trim().min(1).max(180),
+  displayName: z.string().trim().min(1).max(160),
+  shoppingName: z.string().trim().min(1).max(140),
+  quantity: z.string().trim().max(120).default(""),
+  unit: z.string().trim().max(40).default(""),
+  quantityNotes: z.array(z.string().trim().min(1).max(180)).default([]),
+  pantryStaple: z.boolean().default(false),
+  checked: z.boolean().default(false),
+  preferredStores: z.array(shoppingStoreSchema).max(6).optional(),
+  shoppingUrlOverrides: shoppingUrlOverridesSchema.optional(),
+  sourceRecipes: z.array(grocerySourceRecipeSchema).max(20).default([]),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
+});
+export type GroceryListItem = z.infer<typeof groceryListItemSchema>;
+
 export const recipeRecordSchema = savedRecipeSchema.extend({
   safetyBadge: z.literal("Nightshade & Tomato Safe ✅").default("Nightshade & Tomato Safe ✅")
 });

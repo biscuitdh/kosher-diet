@@ -9,7 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { findRecipeById, getSelectedRecipeProfile, isRecipeSaved, removeSavedRecipe, upsertSavedRecipe } from "@/lib/storage";
+import {
+  addRecipeIngredientsToGroceryList,
+  findRecipeById,
+  getSelectedRecipeProfile,
+  isRecipeSaved,
+  removeSavedRecipe,
+  upsertSavedRecipe
+} from "@/lib/storage";
 import type { RecipeProfile, RecipeRecord, SavedRecipe } from "@/lib/schemas";
 import { formatIngredientForCopy, shoppingLinksForIngredient } from "@/lib/shopping";
 import { formatMinutes, titleCase } from "@/lib/utils";
@@ -25,6 +32,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
   const [selectedProfile, setSelectedProfile] = useState<RecipeProfile | undefined>();
   const [loaded, setLoaded] = useState(false);
   const [copiedItem, setCopiedItem] = useState("");
+  const [groceryMessage, setGroceryMessage] = useState("");
 
   useEffect(() => {
     const found = findRecipeById(id);
@@ -67,6 +75,13 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
       source: record.source
     });
     setIsSaved(true);
+  }
+
+  function addGroceries() {
+    if (!record) return;
+    const profileId = selectedProfile?.id ?? getSelectedRecipeProfile().id;
+    const result = addRecipeIngredientsToGroceryList(record, profileId);
+    setGroceryMessage(`Grocery list updated: ${result.added} added, ${result.updated} updated.`);
   }
 
   const handleProfileChange = useCallback((profile: RecipeProfile) => {
@@ -173,6 +188,10 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
               <Heart fill={isSaved ? "currentColor" : "none"} />
               {isSaved ? "Favorited" : "Favorite"}
             </Button>
+            <Button type="button" onClick={addGroceries} variant="outline" size="lg">
+              <ShoppingCart />
+              Add ingredients
+            </Button>
             <Button asChild variant="outline" size="lg">
               <Link href={`/generate?variation=${record.id}`}>
                 <RefreshCw />
@@ -180,6 +199,11 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
               </Link>
             </Button>
           </div>
+          {groceryMessage ? (
+            <div className="rounded-lg border bg-secondary/45 p-3 text-sm" role="status">
+              {groceryMessage}
+            </div>
+          ) : null}
           <RecipeProfileSelector onProfileChange={handleProfileChange} />
         </div>
       </section>

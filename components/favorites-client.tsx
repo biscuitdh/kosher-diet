@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Heart, Sparkles } from "lucide-react";
+import { BookOpen, Heart, ShoppingCart, Sparkles } from "lucide-react";
 import { RecipeProfileSelector } from "@/components/recipe-profile-selector";
 import { RecipeCard } from "@/components/recipe/recipe-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getSelectedRecipeProfile, loadSavedRecipesForProfile, removeSavedRecipe } from "@/lib/storage";
+import { addRecipeIngredientsToGroceryList, getSelectedRecipeProfile, loadSavedRecipesForProfile, removeSavedRecipe } from "@/lib/storage";
 import type { RecipeProfile, SavedRecipe } from "@/lib/schemas";
 
 export function FavoritesClient() {
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<RecipeProfile | undefined>();
+  const [groceryMessage, setGroceryMessage] = useState("");
 
   useEffect(() => {
     const profile = getSelectedRecipeProfile();
@@ -23,6 +24,7 @@ export function FavoritesClient() {
   const handleProfileChange = useCallback((profile: RecipeProfile) => {
     setSelectedProfile(profile);
     setSavedRecipes(loadSavedRecipesForProfile(profile.id));
+    setGroceryMessage("");
   }, []);
 
   const handleUnfavorite = useCallback(
@@ -31,6 +33,16 @@ export function FavoritesClient() {
       if (!profileId) return;
       removeSavedRecipe(record.id, profileId);
       setSavedRecipes(loadSavedRecipesForProfile(profileId));
+    },
+    [selectedProfile?.id]
+  );
+
+  const handleAddGroceries = useCallback(
+    (record: SavedRecipe) => {
+      const profileId = selectedProfile?.id;
+      if (!profileId) return;
+      const result = addRecipeIngredientsToGroceryList(record, profileId);
+      setGroceryMessage(`${record.recipe.title}: ${result.added} added, ${result.updated} updated in groceries.`);
     },
     [selectedProfile?.id]
   );
@@ -54,6 +66,12 @@ export function FavoritesClient() {
 
       <RecipeProfileSelector onProfileChange={handleProfileChange} />
 
+      {groceryMessage ? (
+        <div className="rounded-lg border bg-secondary/45 p-3 text-sm" role="status">
+          {groceryMessage}
+        </div>
+      ) : null}
+
       {savedRecipes.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {savedRecipes.map((record) => (
@@ -61,10 +79,16 @@ export function FavoritesClient() {
               key={`${record.profileId}-${record.id}`}
               record={record}
               action={
-                <Button type="button" variant="outline" className="w-full" onClick={() => handleUnfavorite(record)}>
-                  <Heart fill="currentColor" />
-                  Unfavorite
-                </Button>
+                <div className="grid gap-2">
+                  <Button type="button" variant="outline" className="w-full" onClick={() => handleAddGroceries(record)}>
+                    <ShoppingCart />
+                    Add groceries
+                  </Button>
+                  <Button type="button" variant="outline" className="w-full" onClick={() => handleUnfavorite(record)}>
+                    <Heart fill="currentColor" />
+                    Unfavorite
+                  </Button>
+                </div>
               }
             />
           ))}

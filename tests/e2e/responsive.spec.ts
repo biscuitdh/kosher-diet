@@ -1,12 +1,13 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    if (window.name.includes("koshertable-storage-cleared")) return;
+test.beforeEach(async ({ page }, testInfo) => {
+  const storageToken = `koshertable-storage-cleared-${testInfo.workerIndex}-${Date.now()}-${Math.random()}`;
+  await page.addInitScript((token) => {
+    if (window.sessionStorage.getItem(token)) return;
     window.localStorage.clear();
     window.sessionStorage.clear();
-    window.name = `${window.name} koshertable-storage-cleared`;
-  });
+    window.sessionStorage.setItem(token, "true");
+  }, storageToken);
 });
 
 async function expectHeaderSearch(page: Page) {
@@ -15,6 +16,12 @@ async function expectHeaderSearch(page: Page) {
 
 function visibleNavLink(page: Page, href: string, label: RegExp) {
   return page.locator(`a[href="${href}"]:visible`).filter({ hasText: label }).first();
+}
+
+async function clickVisibleNavLink(page: Page, href: string, label: RegExp) {
+  await visibleNavLink(page, href, label).evaluate((element) => {
+    (element as HTMLAnchorElement).click();
+  });
 }
 
 async function expectFourByThreeFrame(frame: Locator) {
@@ -36,6 +43,7 @@ test("home renders the Find form", async ({ page }) => {
   await expect(page.locator('a[href="/"]').filter({ hasText: /^Find$/ }).first()).toBeAttached();
   await expect(page.locator('a[href="/find"]').filter({ hasText: /^Browse$/ }).first()).toBeAttached();
   await expect(page.locator('a[href="/favorites"]').filter({ hasText: /^Favorites$/ }).first()).toBeAttached();
+  await expect(page.locator('a[href="/groceries"]').filter({ hasText: /^Groceries$/ }).first()).toBeAttached();
   await expect(page.locator("nav").filter({ hasText: /^Home$/ })).toHaveCount(0);
   await expect(page.getByText("Be specific when you care.")).toHaveCount(0);
   await expect(page.getByRole("switch", { name: /Kosher for Passover/i })).toBeVisible();
@@ -44,20 +52,24 @@ test("home renders the Find form", async ({ page }) => {
   await expect(page.getByText("Set the profile once")).toHaveCount(0);
 });
 
-test("top-level navigation opens Find, Browse, and Favorites", async ({ page }) => {
+test("top-level navigation opens Find, Browse, Favorites, and Groceries", async ({ page }) => {
   await page.goto("/find");
 
-  await visibleNavLink(page, "/", /^Find$/).click();
+  await clickVisibleNavLink(page, "/", /^Find$/);
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("button", { name: /Find Recipe/i })).toBeVisible();
 
-  await visibleNavLink(page, "/find", /^Browse$/).click();
+  await clickVisibleNavLink(page, "/find", /^Browse$/);
   await expect(page).toHaveURL(/\/find$/);
   await expect(page.getByRole("button", { name: /Shuffle/i })).toBeVisible();
 
-  await visibleNavLink(page, "/favorites", /^Favorites$/).click();
+  await clickVisibleNavLink(page, "/favorites", /^Favorites$/);
   await expect(page).toHaveURL(/\/favorites$/);
   await expect(page.getByRole("heading", { level: 1, name: /^Favorites$/ })).toBeVisible();
+
+  await clickVisibleNavLink(page, "/groceries", /^Groceries$/);
+  await expect(page).toHaveURL(/\/groceries$/);
+  await expect(page.getByRole("heading", { level: 1, name: /^Groceries$/ })).toBeVisible();
 });
 
 test("header search is visible on browse page", async ({ page }) => {
@@ -290,6 +302,51 @@ test("recipe favorites are scoped by selected profile", async ({ page }) => {
   await expect(page.getByRole("button", { name: /^Favorited$/ })).toBeVisible();
 });
 
+test("recipe detail adds ingredients to the grocery list and merges duplicates", async ({ page }) => {
+  await page.goto("/recipes/catalog-0001");
+
+  await page.getByRole("button", { name: /Add ingredients/i }).click();
+  await expect(page.getByRole("status")).toContainText("added");
+  await page.getByRole("button", { name: /Add ingredients/i }).click();
+  await expect(page.getByRole("status")).toContainText("updated");
+
+  await page.goto("/groceries");
+  await expect(page.getByRole("heading", { level: 1, name: /^Groceries$/ })).toBeVisible();
+  await expect(page.getByText(/Mediterranean Lemon Herb/i).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /Copy agent manifest/i })).toBeEnabled();
+  await expect(page.getByRole("heading", { name: /Walmart|Wegmans|KŌSH|Grow & Behold|KOL Foods/ }).first()).toBeVisible();
+
+  const firstItem = page.locator("input[aria-label^='Quantity for']").first();
+  await firstItem.fill("3");
+  await expect(firstItem).toHaveValue("3");
+
+  await page.getByRole("checkbox", { name: /^Check / }).first().click();
+  await page.getByRole("button", { name: /^Clear checked$/ }).click();
+  await expect(page.locator("input[aria-label^='Quantity for']").first()).toHaveCount(1);
+});
+
+test("groceries are scoped by profile and support custom items", async ({ page }) => {
+  await page.goto("/groceries");
+  await expect(page.getByRole("combobox", { name: /Recipe profile/i })).toContainText("Household");
+
+  const customForm = page.getByRole("form", { name: /Add custom grocery item/i });
+  await customForm.getByLabel("Custom grocery item").fill("Apples");
+  await customForm.getByLabel("Custom grocery quantity").fill("4");
+  await customForm.getByLabel("Custom grocery unit").fill("items");
+  await customForm.getByRole("button", { name: /^Add$/ }).click();
+  await expect(page.getByText("Apples").first()).toBeVisible();
+
+  await page.getByLabel(/New recipe profile name/i).fill("Sam");
+  await page.getByRole("button", { name: /^Add$/ }).first().click();
+  await expect(page.getByText("Apples")).toHaveCount(0);
+
+  await page.getByRole("combobox", { name: /Recipe profile/i }).click();
+  await page.getByRole("option", { name: "Household" }).click();
+  await expect(page.getByText("Apples").first()).toBeVisible();
+  await page.getByRole("button", { name: /^Remove$/ }).click();
+  await expect(page.getByText("Apples")).toHaveCount(0);
+});
+
 test("favorites page lists saved recipes by active profile", async ({ page }) => {
   await page.goto("/favorites");
   await expectHeaderSearch(page);
@@ -305,15 +362,12 @@ test("favorites page lists saved recipes by active profile", async ({ page }) =>
   await expect(page.locator('a[href="/recipes/catalog-0001"]')).toBeVisible();
   await expectFourByThreeFrame(page.getByTestId("recipe-card-image-frame").first());
   await expect(page.getByText("No favorites yet")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /^Unfavorite$/ })).toBeVisible();
-  await page.getByRole("button", { name: /^Unfavorite$/ }).click();
-  await expect(page).toHaveURL(/\/favorites$/);
-  await expect(page.locator('a[href="/recipes/catalog-0001"]')).toHaveCount(0);
-  await expect(page.getByText("No favorites yet")).toBeVisible();
-
-  await page.goto("/recipes/catalog-0001");
-  await page.getByRole("button", { name: /^Favorite$/ }).click();
+  await page.getByRole("button", { name: /^Add groceries$/ }).click();
+  await expect(page.getByRole("status")).toContainText(/added|updated/);
+  await page.goto("/groceries");
+  await expect(page.getByText(/Mediterranean Lemon Herb/i).first()).toBeVisible();
   await page.goto("/favorites");
+  await expect(page.getByRole("button", { name: /^Unfavorite$/ })).toBeVisible();
   await page.getByLabel(/New recipe profile name/i).fill("Sam");
   await page.getByRole("button", { name: /^Add$/ }).click();
   await expect(page.getByText("No favorites yet")).toBeVisible();
@@ -322,4 +376,8 @@ test("favorites page lists saved recipes by active profile", async ({ page }) =>
   await page.getByRole("combobox", { name: /Recipe profile/i }).click();
   await page.getByRole("option", { name: "Household" }).click();
   await expect(page.locator('a[href="/recipes/catalog-0001"]')).toBeVisible();
+  await page.getByRole("button", { name: /^Unfavorite$/ }).click();
+  await expect(page).toHaveURL(/\/favorites$/);
+  await expect(page.locator('a[href="/recipes/catalog-0001"]')).toHaveCount(0);
+  await expect(page.getByText("No favorites yet")).toBeVisible();
 });
