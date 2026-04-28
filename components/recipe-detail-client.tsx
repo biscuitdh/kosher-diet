@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Check, Clock, Copy, ExternalLink, Flame, RefreshCw, Save, ShoppingCart, UsersRound } from "lucide-react";
+import { RecipeImage } from "@/components/recipe/recipe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { withBasePath } from "@/lib/assets";
 import { findRecipeById, loadSavedRecipes, removeSavedRecipe, upsertSavedRecipe } from "@/lib/storage";
 import type { RecipeRecord, SavedRecipe } from "@/lib/schemas";
 import { formatIngredientForCopy, shoppingLinksForIngredient } from "@/lib/shopping";
@@ -109,8 +108,8 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
 
       <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="mx-auto w-full max-w-[26rem] overflow-hidden rounded-lg border bg-card shadow-soft lg:mx-0">
-          <Image
-            src={withBasePath(record.imagePath)}
+          <RecipeImage
+            src={record.imagePath}
             alt=""
             width={320}
             height={240}

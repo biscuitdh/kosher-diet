@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Clock, Dice5, Flame, Search, Shuffle, Sparkles, UsersRound } from "lucide-react";
+import { RecipeImage } from "@/components/recipe/recipe-image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { withBasePath } from "@/lib/assets";
 import {
   appendSuggestion,
   availableIngredientSuggestions,
@@ -173,7 +172,7 @@ function RecipeMatchCard({
       )}
     >
       <div className={cn("relative overflow-hidden bg-muted", compact ? "h-full min-h-24" : "aspect-[4/3] sm:aspect-auto")}>
-        <Image src={withBasePath(record.imagePath)} alt="" width={360} height={270} className="size-full object-cover transition duration-300 group-hover:scale-105" />
+        <RecipeImage src={record.imagePath} alt="" width={360} height={270} className="size-full object-cover transition duration-300 group-hover:scale-105" />
       </div>
       <div className="min-w-0 space-y-2 p-3">
         <div className="flex flex-wrap gap-1.5">
