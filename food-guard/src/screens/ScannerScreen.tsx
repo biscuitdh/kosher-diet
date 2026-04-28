@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, useLocalSearchParams } from "expo-router";
@@ -19,6 +19,7 @@ export function ScannerScreen() {
   const { colors } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const debouncer = useRef(createScanDebouncer()).current;
+  const lookupController = useRef<AbortController | null>(null);
   const [manualBarcode, setManualBarcode] = useState("");
   const [message, setMessage] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -35,6 +36,10 @@ export function ScannerScreen() {
     if (!selected) throw new Error("No profile available.");
     return selected;
   }, [profileId]);
+
+  useEffect(() => {
+    return () => lookupController.current?.abort();
+  }, []);
 
   async function finish(product: Product) {
     const profile = await loadProfile();
@@ -54,17 +59,27 @@ export function ScannerScreen() {
     setProcessing(true);
     setMessage(`Looking up ${barcode}...`);
     setPendingProduct(undefined);
+    lookupController.current?.abort();
+    const controller = new AbortController();
+    lookupController.current = controller;
+    const isCurrentLookup = () => lookupController.current === controller && !controller.signal.aborted;
 
     try {
       await initStorage();
+      if (!isCurrentLookup()) return;
+
       const cached = await getProduct(barcode);
+      if (!isCurrentLookup()) return;
       if (cached?.ocrText || cached?.ingredientsText) {
         await finish(cached);
         return;
       }
 
-      const result = await lookupProductByBarcode(barcode, { useMockFallback: true });
+      const result = await lookupProductByBarcode(barcode, { useMockFallback: true, signal: controller.signal });
+      if (!isCurrentLookup()) return;
+
       await saveProduct(result.product);
+      if (!isCurrentLookup()) return;
 
       if (!result.ok) {
         setPendingProduct(result.product);
@@ -80,7 +95,10 @@ export function ScannerScreen() {
 
       await finish(result.product);
     } finally {
-      setProcessing(false);
+      if (lookupController.current === controller) {
+        lookupController.current = null;
+        if (!controller.signal.aborted) setProcessing(false);
+      }
     }
   }
 

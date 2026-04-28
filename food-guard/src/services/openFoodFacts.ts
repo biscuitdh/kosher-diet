@@ -1,7 +1,7 @@
 import { MOCK_PRODUCTS } from "@/mocks/products";
 import type { Product } from "@/types/Product";
 
-export type ProductLookupFailureReason = "not_found" | "network_error" | "malformed";
+export type ProductLookupFailureReason = "not_found" | "network_error" | "malformed" | "cancelled";
 
 export type ProductLookupResult =
   | {
@@ -17,8 +17,15 @@ export type ProductLookupResult =
       product: Product;
     };
 
+export type ProductLookupOptions = {
+  useMockFallback?: boolean;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+};
+
 const OPEN_FOOD_FACTS_BASE = "https://world.openfoodfacts.org/api/v2/product";
 const USER_AGENT = "FoodGuard/0.1.0 (private-family-use; no account; local-first)";
+const DEFAULT_LOOKUP_TIMEOUT_MS = 8_000;
 
 const PRODUCT_FIELDS = [
   "code",
@@ -38,7 +45,7 @@ const PRODUCT_FIELDS = [
 
 export async function lookupProductByBarcode(
   barcode: string,
-  options: { useMockFallback?: boolean } = {}
+  options: ProductLookupOptions = {}
 ): Promise<ProductLookupResult> {
   const normalizedBarcode = barcode.trim();
   const now = new Date().toISOString();
@@ -48,10 +55,13 @@ export async function lookupProductByBarcode(
     return failure("malformed", "Barcode is empty.", normalizedBarcode, now);
   }
 
+  const timeout = createTimeoutSignal(options);
+
   try {
     const url = `${OPEN_FOOD_FACTS_BASE}/${encodeURIComponent(normalizedBarcode)}.json?fields=${PRODUCT_FIELDS}`;
     const response = await fetch(url, {
       method: "GET",
+      signal: timeout.signal,
       headers: {
         Accept: "application/json",
         "User-Agent": USER_AGENT
@@ -68,9 +78,56 @@ export async function lookupProductByBarcode(
 
     return fallbackOrFailure(mock, parsed.reason, parsed.message, normalizedBarcode, now, options);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Network request failed.";
+    if (lookupWasCancelled(timeout.timedOut, options.signal?.aborted)) {
+      return failure("cancelled", "Open Food Facts lookup was cancelled.", normalizedBarcode, now);
+    }
+
+    const message = lookupErrorMessage(error, timeout.timedOut, options.signal?.aborted);
     return fallbackOrFailure(mock, "network_error", message, normalizedBarcode, now, options);
+  } finally {
+    timeout.cleanup();
   }
+}
+
+function lookupWasCancelled(timedOut: boolean, cancelled?: boolean) {
+  return Boolean(cancelled && !timedOut);
+}
+
+function lookupErrorMessage(error: unknown, timedOut: boolean, cancelled?: boolean) {
+  if (timedOut) return "Open Food Facts lookup timed out. Try again or scan the ingredient label.";
+  if (cancelled) return "Open Food Facts lookup was cancelled.";
+  return error instanceof Error ? error.message : "Network request failed.";
+}
+
+function lookupTimeoutMs(value: number | undefined) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : DEFAULT_LOOKUP_TIMEOUT_MS;
+}
+
+function createTimeoutSignal(options: ProductLookupOptions) {
+  const controller = new AbortController();
+  let timedOut = false;
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, lookupTimeoutMs(options.timeoutMs));
+
+  const abortFromParent = () => controller.abort();
+  if (options.signal?.aborted) {
+    controller.abort();
+  } else {
+    options.signal?.addEventListener("abort", abortFromParent, { once: true });
+  }
+
+  return {
+    signal: controller.signal,
+    get timedOut() {
+      return timedOut;
+    },
+    cleanup() {
+      clearTimeout(timeoutId);
+      options.signal?.removeEventListener("abort", abortFromParent);
+    }
+  };
 }
 
 function parseOpenFoodFactsPayload(payload: unknown, barcode: string, now: string): ProductLookupResult {
@@ -116,7 +173,7 @@ function fallbackOrFailure(
   now: string,
   options: { useMockFallback?: boolean }
 ): ProductLookupResult {
-  if (options.useMockFallback !== false && mock) {
+  if (reason !== "cancelled" && options.useMockFallback !== false && mock) {
     return {
       ok: true,
       product: {

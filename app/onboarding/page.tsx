@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { OnboardingRedirectClient } from "@/components/onboarding-redirect-client";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Find Recipes"
 };
 
 export default function OnboardingPage() {
-  return <OnboardingRedirectClient />;
+  redirect("/generate");
 }

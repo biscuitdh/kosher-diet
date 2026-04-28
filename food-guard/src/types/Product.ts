@@ -1,4 +1,4 @@
-export type ProductLookupStatus = "found" | "not_found" | "network_error" | "malformed" | "mock" | "manual";
+export type ProductLookupStatus = "found" | "not_found" | "network_error" | "malformed" | "cancelled" | "mock" | "manual";
 
 export type ProductImageUrls = {
   front?: string | undefined;

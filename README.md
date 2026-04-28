@@ -176,11 +176,12 @@ docker compose run --rm web-dev npm run images:check
 - Kosher for Passover mode is strict no-kitniyot: no chametz, rice, corn, beans, lentils, chickpeas, soy, tofu, sesame, tahini, mustard, buckwheat, caraway, cardamom, fennel seeds, peas, or similar kitniyot.
 - Every optional LLM call uses the strict kosher/allergy system prompt verbatim.
 - The server forces the fixed safety profile on every generation request, even if a client submits weaker settings.
-- Server validates request shape with Zod, validates model output with Zod, then checks forbidden ingredients.
+- Server caps generation request bodies before JSON parsing, validates request shape with Zod, validates model output with Zod, then checks forbidden ingredients.
 - Client validates generated recipe safety again before saving or rendering.
 - Client-side AI limit remains available for the optional AI path: 5 AI calls per 10 minutes.
-- Server-side in-memory limit: 20 AI calls per hour per client IP per container.
-- No external auth in MVP. This is intentionally easy to wrap with Clerk later.
+- Server-side in-memory limit: 20 AI calls per hour, with bounded bucket storage. It uses a shared anonymous key unless `AI_RATE_LIMIT_TRUST_PROXY_HEADERS=true` is set behind a trusted proxy that strips spoofed forwarding headers.
+- In production with a real LLM provider, `/api/recipes/generate` requires `AI_GENERATION_API_KEY` and accepts it as `Authorization: Bearer <key>` or `x-ai-generation-key`.
+- No user-account auth in MVP. This is intentionally easy to wrap with Clerk later.
 
 ## Validation
 
@@ -274,6 +275,7 @@ HOSTNAME=0.0.0.0
 LLM_PROVIDER=openai
 OPENAI_API_KEY=...
 OPENAI_MODEL=gpt-4o
+AI_GENERATION_API_KEY=...
 ```
 
 Expose port `3000` from the container. Run behind TLS at the load balancer or ingress layer.

@@ -3,6 +3,8 @@ import { lookupProductByBarcode } from "@/services/openFoodFacts";
 
 describe("Open Food Facts lookup", () => {
   afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -59,5 +61,57 @@ describe("Open Food Facts lookup", () => {
     const result = await lookupProductByBarcode("000000000001", { useMockFallback: true });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.product.source).toBe("mock");
+  });
+
+  it("times out slow product lookups", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            const error = new Error("aborted");
+            error.name = "AbortError";
+            reject(error);
+          });
+        });
+      })
+    );
+
+    const resultPromise = lookupProductByBarcode("123456789012", { useMockFallback: false, timeoutMs: 25 });
+    await vi.advanceTimersByTimeAsync(25);
+
+    const result = await resultPromise;
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("network_error");
+      expect(result.message).toMatch(/timed out/i);
+    }
+  });
+
+  it("does not fall back to mock data when a caller cancels the lookup", async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            const error = new Error("aborted");
+            error.name = "AbortError";
+            reject(error);
+          });
+        });
+      })
+    );
+
+    const resultPromise = lookupProductByBarcode("000000000001", { useMockFallback: true, signal: controller.signal });
+    controller.abort();
+
+    const result = await resultPromise;
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("cancelled");
+      expect(result.product.source).toBe("open-food-facts");
+    }
   });
 });
