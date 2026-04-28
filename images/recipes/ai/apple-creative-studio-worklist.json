@@ -1,0 +1,724 @@
+{
+  "generatedAt": "2026-04-27T00:00:00.000Z",
+  "workflow": "Apple Creative Studio external image handoff",
+  "outputDirectory": "public/images/recipes/ai",
+  "preferredExportFormat": "webp",
+  "aspectRatio": "4:3",
+  "importInstructions": [
+    "Generate one image per work item using the prompt verbatim or with only minor composition refinements.",
+    "Export as WebP when possible; PNG is acceptable if WebP is unavailable.",
+    "Save each finished image using targetFilename directly inside public/images/recipes/ai.",
+    "After importing files, run npm run images:recipes so the registry points at raster images instead of SVG placeholders.",
+    "Run npm run images:check before previewing."
+  ],
+  "visualRules": [
+    "Photorealistic plated meal for two.",
+    "Warm Jewish home-cooking table setting.",
+    "No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people.",
+    "No meat and dairy visual mixing.",
+    "Passover-safe items must not show bread, pasta, rice, corn, beans, lentils, chickpeas, soy/tofu, sesame/tahini, or kitniyot-style sides."
+  ],
+  "items": [
+    {
+      "order": 1,
+      "key": "walleye-passover-01-lemon-dill-matzo-farfel",
+      "targetFilename": "walleye-passover-01-lemon-dill-matzo-farfel.webp",
+      "targetPath": "/images/recipes/ai/walleye-passover-01-lemon-dill-matzo-farfel.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-passover-01-lemon-dill-matzo-farfel.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with kosher for Passover sides",
+      "prompt": "Photorealistic editorial food image of walleye fillets with kosher for Passover sides, lemon dill matzo farfel. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "matzo farfel",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "parsley",
+        "garlic",
+        "ginger",
+        "cumin"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 2,
+      "key": "walleye-passover-02-parsley-quinoa-carrots",
+      "targetFilename": "walleye-passover-02-parsley-quinoa-carrots.webp",
+      "targetPath": "/images/recipes/ai/walleye-passover-02-parsley-quinoa-carrots.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-passover-02-parsley-quinoa-carrots.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with kosher for Passover sides",
+      "prompt": "Photorealistic editorial food image of walleye fillets with kosher for Passover sides, parsley quinoa carrots. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "matzo farfel",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "parsley",
+        "garlic",
+        "ginger",
+        "cumin"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 3,
+      "key": "walleye-passover-03-garlic-cauliflower-crumble",
+      "targetFilename": "walleye-passover-03-garlic-cauliflower-crumble.webp",
+      "targetPath": "/images/recipes/ai/walleye-passover-03-garlic-cauliflower-crumble.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-passover-03-garlic-cauliflower-crumble.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with kosher for Passover sides",
+      "prompt": "Photorealistic editorial food image of walleye fillets with kosher for Passover sides, garlic cauliflower crumble. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "matzo farfel",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "parsley",
+        "garlic",
+        "ginger",
+        "cumin"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 4,
+      "key": "walleye-passover-04-ginger-carrots-zucchini",
+      "targetFilename": "walleye-passover-04-ginger-carrots-zucchini.webp",
+      "targetPath": "/images/recipes/ai/walleye-passover-04-ginger-carrots-zucchini.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-passover-04-ginger-carrots-zucchini.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with kosher for Passover sides",
+      "prompt": "Photorealistic editorial food image of walleye fillets with kosher for Passover sides, ginger carrots zucchini. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "matzo farfel",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "parsley",
+        "garlic",
+        "ginger",
+        "cumin"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 5,
+      "key": "walleye-passover-05-cumin-coriander-quinoa",
+      "targetFilename": "walleye-passover-05-cumin-coriander-quinoa.webp",
+      "targetPath": "/images/recipes/ai/walleye-passover-05-cumin-coriander-quinoa.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-passover-05-cumin-coriander-quinoa.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with kosher for Passover sides",
+      "prompt": "Photorealistic editorial food image of walleye fillets with kosher for Passover sides, cumin coriander quinoa. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "matzo farfel",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "parsley",
+        "garlic",
+        "ginger",
+        "cumin"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 6,
+      "key": "walleye-passover-06-rosemary-cauliflower-herbs",
+      "targetFilename": "walleye-passover-06-rosemary-cauliflower-herbs.webp",
+      "targetPath": "/images/recipes/ai/walleye-passover-06-rosemary-cauliflower-herbs.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-passover-06-rosemary-cauliflower-herbs.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with kosher for Passover sides",
+      "prompt": "Photorealistic editorial food image of walleye fillets with kosher for Passover sides, rosemary cauliflower herbs. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "matzo farfel",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "parsley",
+        "garlic",
+        "ginger",
+        "cumin"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 7,
+      "key": "walleye-passover-07-lemon-dill-matzo-farfel",
+      "targetFilename": "walleye-passover-07-lemon-dill-matzo-farfel.webp",
+      "targetPath": "/images/recipes/ai/walleye-passover-07-lemon-dill-matzo-farfel.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-passover-07-lemon-dill-matzo-farfel.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with kosher for Passover sides",
+      "prompt": "Photorealistic editorial food image of walleye fillets with kosher for Passover sides, lemon dill matzo farfel. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "matzo farfel",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "parsley",
+        "garlic",
+        "ginger",
+        "cumin"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 8,
+      "key": "walleye-passover-08-parsley-quinoa-carrots",
+      "targetFilename": "walleye-passover-08-parsley-quinoa-carrots.webp",
+      "targetPath": "/images/recipes/ai/walleye-passover-08-parsley-quinoa-carrots.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-passover-08-parsley-quinoa-carrots.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with kosher for Passover sides",
+      "prompt": "Photorealistic editorial food image of walleye fillets with kosher for Passover sides, parsley quinoa carrots. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "matzo farfel",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "parsley",
+        "garlic",
+        "ginger",
+        "cumin"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 9,
+      "key": "walleye-weeknight-01-lemon-rice",
+      "targetFilename": "walleye-weeknight-01-lemon-rice.webp",
+      "targetPath": "/images/recipes/ai/walleye-weeknight-01-lemon-rice.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-weeknight-01-lemon-rice.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with weeknight grains",
+      "prompt": "Photorealistic editorial food image of walleye fillets with weeknight grains, lemon rice. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "rice",
+        "quinoa",
+        "couscous",
+        "pasta"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "sumac",
+        "mint",
+        "oregano"
+      ],
+      "passoverSafe": false
+    },
+    {
+      "order": 10,
+      "key": "walleye-weeknight-02-dill-quinoa",
+      "targetFilename": "walleye-weeknight-02-dill-quinoa.webp",
+      "targetPath": "/images/recipes/ai/walleye-weeknight-02-dill-quinoa.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-weeknight-02-dill-quinoa.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with weeknight grains",
+      "prompt": "Photorealistic editorial food image of walleye fillets with weeknight grains, dill quinoa. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "rice",
+        "quinoa",
+        "couscous",
+        "pasta"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "sumac",
+        "mint",
+        "oregano"
+      ],
+      "passoverSafe": false
+    },
+    {
+      "order": 11,
+      "key": "walleye-weeknight-03-sumac-couscous",
+      "targetFilename": "walleye-weeknight-03-sumac-couscous.webp",
+      "targetPath": "/images/recipes/ai/walleye-weeknight-03-sumac-couscous.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-weeknight-03-sumac-couscous.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with weeknight grains",
+      "prompt": "Photorealistic editorial food image of walleye fillets with weeknight grains, sumac couscous. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "rice",
+        "quinoa",
+        "couscous",
+        "pasta"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "sumac",
+        "mint",
+        "oregano"
+      ],
+      "passoverSafe": false
+    },
+    {
+      "order": 12,
+      "key": "walleye-weeknight-04-mint-greens",
+      "targetFilename": "walleye-weeknight-04-mint-greens.webp",
+      "targetPath": "/images/recipes/ai/walleye-weeknight-04-mint-greens.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/walleye-weeknight-04-mint-greens.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "walleye fillets with weeknight grains",
+      "prompt": "Photorealistic editorial food image of walleye fillets with weeknight grains, mint greens. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "walleye"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "rice",
+        "quinoa",
+        "couscous",
+        "pasta"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "sumac",
+        "mint",
+        "oregano"
+      ],
+      "passoverSafe": false
+    },
+    {
+      "order": 13,
+      "key": "salmon-01-lemon-quinoa",
+      "targetFilename": "salmon-01-lemon-quinoa.webp",
+      "targetPath": "/images/recipes/ai/salmon-01-lemon-quinoa.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/salmon-01-lemon-quinoa.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "salmon fillets with herbs and grains",
+      "prompt": "Photorealistic editorial food image of salmon fillets with herbs and grains, lemon quinoa. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "salmon"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "quinoa",
+        "rice",
+        "greens"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "mint",
+        "oregano"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 14,
+      "key": "salmon-02-dill-carrots",
+      "targetFilename": "salmon-02-dill-carrots.webp",
+      "targetPath": "/images/recipes/ai/salmon-02-dill-carrots.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/salmon-02-dill-carrots.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "salmon fillets with herbs and grains",
+      "prompt": "Photorealistic editorial food image of salmon fillets with herbs and grains, dill carrots. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "salmon"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "quinoa",
+        "rice",
+        "greens"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "dill",
+        "mint",
+        "oregano"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 15,
+      "key": "white-fish-01-cod-lemon",
+      "targetFilename": "white-fish-01-cod-lemon.webp",
+      "targetPath": "/images/recipes/ai/white-fish-01-cod-lemon.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/white-fish-01-cod-lemon.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "white fish fillets with clean herb sides",
+      "prompt": "Photorealistic editorial food image of white fish fillets with clean herb sides, cod lemon. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "cod",
+        "trout",
+        "tuna"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "quinoa",
+        "rice",
+        "cauliflower",
+        "greens"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "parsley",
+        "garlic",
+        "dill"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 16,
+      "key": "white-fish-02-trout-herbs",
+      "targetFilename": "white-fish-02-trout-herbs.webp",
+      "targetPath": "/images/recipes/ai/white-fish-02-trout-herbs.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/white-fish-02-trout-herbs.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "white fish fillets with clean herb sides",
+      "prompt": "Photorealistic editorial food image of white fish fillets with clean herb sides, trout herbs. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "cod",
+        "trout",
+        "tuna"
+      ],
+      "familyMatches": [
+        "fish"
+      ],
+      "baseMatches": [
+        "quinoa",
+        "rice",
+        "cauliflower",
+        "greens"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "parsley",
+        "garlic",
+        "dill"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 17,
+      "key": "chicken-thighs-01-lemon-quinoa",
+      "targetFilename": "chicken-thighs-01-lemon-quinoa.webp",
+      "targetPath": "/images/recipes/ai/chicken-thighs-01-lemon-quinoa.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/chicken-thighs-01-lemon-quinoa.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "kosher chicken thighs with carrots and herbs",
+      "prompt": "Photorealistic editorial food image of kosher chicken thighs with carrots and herbs, lemon quinoa. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "chicken thighs"
+      ],
+      "familyMatches": [
+        "meat"
+      ],
+      "baseMatches": [
+        "quinoa",
+        "rice",
+        "matzo farfel",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "rosemary",
+        "sumac",
+        "garlic"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 18,
+      "key": "chicken-thighs-02-rosemary-carrots",
+      "targetFilename": "chicken-thighs-02-rosemary-carrots.webp",
+      "targetPath": "/images/recipes/ai/chicken-thighs-02-rosemary-carrots.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/chicken-thighs-02-rosemary-carrots.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "kosher chicken thighs with carrots and herbs",
+      "prompt": "Photorealistic editorial food image of kosher chicken thighs with carrots and herbs, rosemary carrots. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "chicken thighs"
+      ],
+      "familyMatches": [
+        "meat"
+      ],
+      "baseMatches": [
+        "quinoa",
+        "rice",
+        "matzo farfel",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "lemon",
+        "rosemary",
+        "sumac",
+        "garlic"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 19,
+      "key": "chicken-breast-01-garlic-quinoa",
+      "targetFilename": "chicken-breast-01-garlic-quinoa.webp",
+      "targetPath": "/images/recipes/ai/chicken-breast-01-garlic-quinoa.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/chicken-breast-01-garlic-quinoa.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "kosher chicken breast slices with vegetables",
+      "prompt": "Photorealistic editorial food image of kosher chicken breast slices with vegetables, garlic quinoa. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "chicken breast"
+      ],
+      "familyMatches": [
+        "meat"
+      ],
+      "baseMatches": [
+        "rice",
+        "quinoa",
+        "greens"
+      ],
+      "flavorMatches": [
+        "garlic",
+        "thyme",
+        "parsley"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 20,
+      "key": "beef-01-ground-beef-quinoa",
+      "targetFilename": "beef-01-ground-beef-quinoa.webp",
+      "targetPath": "/images/recipes/ai/beef-01-ground-beef-quinoa.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/beef-01-ground-beef-quinoa.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "kosher beef with vegetables and grains",
+      "prompt": "Photorealistic editorial food image of kosher beef with vegetables and grains, ground beef quinoa. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "ground beef",
+        "beef stew"
+      ],
+      "familyMatches": [
+        "meat"
+      ],
+      "baseMatches": [
+        "rice",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "cumin",
+        "garlic",
+        "coriander"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 21,
+      "key": "eggs-01-dill-eggs",
+      "targetFilename": "eggs-01-dill-eggs.webp",
+      "targetPath": "/images/recipes/ai/eggs-01-dill-eggs.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/eggs-01-dill-eggs.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "egg-based kosher meal with herbs",
+      "prompt": "Photorealistic editorial food image of egg-based kosher meal with herbs, dill eggs. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "eggs"
+      ],
+      "familyMatches": [
+        "eggs"
+      ],
+      "baseMatches": [
+        "greens",
+        "quinoa",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "dill",
+        "parsley",
+        "garlic"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 22,
+      "key": "mushroom-vegetable-01-mushroom-quinoa",
+      "targetFilename": "mushroom-vegetable-01-mushroom-quinoa.webp",
+      "targetPath": "/images/recipes/ai/mushroom-vegetable-01-mushroom-quinoa.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/mushroom-vegetable-01-mushroom-quinoa.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "mushrooms and vegetables with grains",
+      "prompt": "Photorealistic editorial food image of mushrooms and vegetables with grains, mushroom quinoa. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "mushrooms",
+        "seasonal vegetables"
+      ],
+      "familyMatches": [
+        "vegetable"
+      ],
+      "baseMatches": [
+        "quinoa",
+        "rice",
+        "cauliflower"
+      ],
+      "flavorMatches": [
+        "garlic",
+        "thyme",
+        "parsley"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 23,
+      "key": "dairy-nuts-01-feta-quinoa",
+      "targetFilename": "dairy-nuts-01-feta-quinoa.webp",
+      "targetPath": "/images/recipes/ai/dairy-nuts-01-feta-quinoa.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/dairy-nuts-01-feta-quinoa.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "dairy and nut kosher plates",
+      "prompt": "Photorealistic editorial food image of dairy and nut kosher plates, feta quinoa. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "feta",
+        "yogurt",
+        "almonds"
+      ],
+      "familyMatches": [
+        "dairy"
+      ],
+      "baseMatches": [
+        "quinoa",
+        "greens",
+        "pita"
+      ],
+      "flavorMatches": [
+        "mint",
+        "lemon",
+        "parsley"
+      ],
+      "passoverSafe": true
+    },
+    {
+      "order": 24,
+      "key": "sweet-potato-01-ginger-quinoa",
+      "targetFilename": "sweet-potato-01-ginger-quinoa.webp",
+      "targetPath": "/images/recipes/ai/sweet-potato-01-ginger-quinoa.webp",
+      "currentPlaceholderPath": "/images/recipes/ai/sweet-potato-01-ginger-quinoa.svg",
+      "reviewStatus": "pending-external-generation",
+      "subject": "sweet potatoes with herbs",
+      "prompt": "Photorealistic editorial food image of sweet potatoes with herbs, ginger quinoa. Plated for two in warm natural light, Jewish home-cooking aesthetic. No tomatoes, peppers, white potatoes, eggplant, paprika, cayenne, pork, shellfish, text, logos, or people. Kosher-safe plating, 4:3 card crop, clean table setting.",
+      "mainMatches": [
+        "sweet potatoes"
+      ],
+      "familyMatches": [
+        "vegetable"
+      ],
+      "baseMatches": [
+        "quinoa",
+        "greens"
+      ],
+      "flavorMatches": [
+        "cinnamon",
+        "ginger",
+        "parsley"
+      ],
+      "passoverSafe": true
+    }
+  ]
+}
