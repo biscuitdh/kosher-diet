@@ -45,9 +45,9 @@ function runNextBuild(env) {
   }
 }
 
-function replaceOutput(name) {
+function replaceOutput(name, targetName = name) {
   const source = path.join(workspace, name);
-  const target = path.join(repoRoot, name);
+  const target = path.join(repoRoot, targetName);
   if (!existsSync(source)) return;
   rmSync(target, { recursive: true, force: true });
   cpSync(source, target, { recursive: true });
@@ -73,6 +73,7 @@ try {
     NEXT_OUTPUT_TRACING_ROOT: workspace
   });
   replaceOutput(".next-export");
+  replaceOutput(".next-export", "out");
 
   runNextBuild({
     NEXT_OUTPUT_EXPORT: "",
