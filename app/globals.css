@@ -48,13 +48,39 @@
     --ring: 168 42% 55%;
   }
 
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   * {
     @apply border-border;
+  }
+
+  html {
+    min-height: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    min-width: 0;
+  }
+
+  html,
+  body {
+    min-height: 100%;
+    overflow-y: auto;
+  }
+
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
   }
 }
 

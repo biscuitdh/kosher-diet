@@ -1,0 +1,41 @@
+project_id         = "koshertable-prod"
+billing_account_id = "000000-000000-000000"
+
+allowed_emails = [
+  "you@example.com",
+  "wife@example.com"
+]
+
+google_oauth_client_id     = "000000000000-example.apps.googleusercontent.com"
+google_oauth_client_secret = "do-not-commit-real-secret"
+
+cloudflare_zone_id    = "00000000000000000000000000000000"
+cloudflare_api_token  = "do-not-commit-real-token"
+budget_amount_usd     = 5
+github_repository     = "biscuitdh/kosher-diet"
+firestore_location    = "nam5"
+domain                = "kosher.netsbyvets.org"
+hosting_site_id       = "koshertable-prod"
+
+# Leave empty for the first apply. After Terraform outputs
+# firebase_custom_domain_dns_updates, translate those records here and apply
+# again so Cloudflare DNS is managed by Terraform.
+firebase_dns_records = []
+
+# Example second-apply shape:
+# firebase_dns_records = [
+#   {
+#     name    = "kosher"
+#     type    = "CNAME"
+#     content = "koshertable-prod.web.app"
+#     ttl     = 300
+#     proxied = false
+#   },
+#   {
+#     name    = "_acme-challenge.kosher"
+#     type    = "TXT"
+#     content = "example-acme-token-from-firebase"
+#     ttl     = 300
+#     proxied = false
+#   }
+# ]

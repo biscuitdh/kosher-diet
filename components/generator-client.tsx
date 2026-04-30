@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Clock, Dice5, Flame, Search, Shuffle, Sparkles, UsersRound } from "lucide-react";
-import { RecipeImage } from "@/components/recipe/recipe-image";
+import { AlertCircle, Clock, Dice5, Flame, Search, Shuffle, UsersRound } from "lucide-react";
+import { RecipeImageFrame } from "@/components/recipe/recipe-image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,41 +16,132 @@ import {
   appendSuggestion,
   availableIngredientSuggestions,
   cuisineSuggestions,
-  extraNoteSuggestions,
   filterSuggestionsForProfile,
+  getSideSuggestionsForMainIngredient,
   mainIngredientSuggestions,
   occasionSuggestions,
   type Suggestion
 } from "@/lib/generator-suggestions";
+import { finderSearchFromSearchParams, finderSearchToSearchParams } from "@/lib/finder-url";
 import { pickRandomCatalogRecipe, searchCatalogRecipes, type CatalogRecipeRecord } from "@/lib/catalog";
-import { FIXED_SAFETY_PROFILE, generationRequestSchema, type FinderSearch, type Recipe } from "@/lib/schemas";
-import { findRecipeById, loadFinderDraft, loadRecentSearches, saveFinderDraft, saveRecentSearch } from "@/lib/storage";
+import {
+  COOKING_DEVICE_LABELS,
+  COOKING_DEVICE_VALUES,
+  FIXED_SAFETY_PROFILE,
+  finderSearchSchema,
+  generationRequestSchema,
+  type CookingDevice,
+  type FinderSearch,
+  type Recipe
+} from "@/lib/schemas";
+import {
+  findRecipeById,
+  loadFinderDraft,
+  loadRecentSearches,
+  saveFinderDraft,
+  saveRecentSearch
+} from "@/lib/storage";
 import { cn, formatMinutes, titleCase } from "@/lib/utils";
 import { validateRecipeSafety } from "@/lib/validators/forbidden-ingredients";
 
 function SuggestionChips({
   label,
   suggestions,
+  caption,
   onPick
 }: {
   label: string;
   suggestions: Suggestion[];
+  caption?: string;
   onPick: (value: string) => void;
 }) {
   if (suggestions.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 pt-1" aria-label={`${label} suggestions`}>
-      {suggestions.map((suggestion) => (
-        <button
-          key={suggestion.value}
-          type="button"
-          onClick={() => onPick(suggestion.value)}
-          className="min-h-8 rounded-md border border-input bg-background px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground focus-ring"
-        >
-          {suggestion.label}
-        </button>
-      ))}
+    <div className="space-y-1 pt-1">
+      {caption ? <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">{caption}</p> : null}
+      <div className="flex flex-wrap gap-2" aria-label={`${label} suggestions`}>
+        {suggestions.map((suggestion) => (
+          <button
+            key={suggestion.value}
+            type="button"
+            onClick={() => onPick(suggestion.value)}
+            className="min-h-11 rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground focus-ring"
+          >
+            {suggestion.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const CUSTOM_SELECT_VALUE = "__custom__";
+const DEFAULT_MAIN_INGREDIENT = "chicken, salmon, eggs, or seasonal vegetables";
+
+function isSuggestedValue(value: string, suggestions: readonly Suggestion[]) {
+  return suggestions.some((suggestion) => suggestion.value === value);
+}
+
+function SelectWithCustom({
+  id,
+  label,
+  value,
+  suggestions,
+  custom,
+  customPlaceholder,
+  onChange,
+  onCustomChange
+}: {
+  id: string;
+  label: string;
+  value: string;
+  suggestions: readonly Suggestion[];
+  custom: boolean;
+  customPlaceholder: string;
+  onChange: (value: string) => void;
+  onCustomChange: (custom: boolean) => void;
+}) {
+  const isCustomValue = custom || !isSuggestedValue(value, suggestions);
+  const selectValue = isCustomValue ? CUSTOM_SELECT_VALUE : value;
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium" htmlFor={id}>
+        {label}
+      </label>
+      <Select
+        value={selectValue}
+        onValueChange={(nextValue) => {
+          if (nextValue === CUSTOM_SELECT_VALUE) {
+            onCustomChange(true);
+            return;
+          }
+          if (!isSuggestedValue(nextValue, suggestions)) return;
+          onCustomChange(false);
+          onChange(nextValue);
+        }}
+      >
+        <SelectTrigger id={id}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {suggestions.map((suggestion) => (
+            <SelectItem key={suggestion.value} value={suggestion.value}>
+              {suggestion.label}
+            </SelectItem>
+          ))}
+          <SelectItem value={CUSTOM_SELECT_VALUE}>Custom</SelectItem>
+        </SelectContent>
+      </Select>
+      {isCustomValue ? (
+        <Input
+          aria-label={`Custom ${label.toLowerCase()}`}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={customPlaceholder}
+        />
+      ) : null}
     </div>
   );
 }
@@ -59,6 +150,7 @@ function summarizeSearch(search: FinderSearch) {
   const parts = [
     search.recipeName || search.mainIngredient || "Meal ideas",
     search.kosherForPassover ? "Passover" : "",
+    search.cookingDevice !== "any" ? COOKING_DEVICE_LABELS[search.cookingDevice] : "",
     search.maxCaloriesPerServing ? `<=${search.maxCaloriesPerServing} cal` : "",
     search.maxTotalTimeMinutes ? `<=${search.maxTotalTimeMinutes} min` : "",
     search.cuisinePreference,
@@ -69,14 +161,6 @@ function summarizeSearch(search: FinderSearch) {
 }
 
 const VIEWED_CATALOG_IDS_KEY = "koshertable.viewedCatalogIds.v1";
-
-function normalizeTitle(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function loadViewedCatalogIds() {
   try {
@@ -89,11 +173,6 @@ function loadViewedCatalogIds() {
 function rememberViewedCatalogId(id: string) {
   const next = [id, ...loadViewedCatalogIds().filter((existingId) => existingId !== id)].slice(0, 30);
   window.sessionStorage.setItem(VIEWED_CATALOG_IDS_KEY, JSON.stringify(next));
-}
-
-function exactTitleRequested(record: CatalogRecipeRecord, recipeName: string) {
-  const queryTitle = normalizeTitle(recipeName);
-  return Boolean(queryTitle && normalizeTitle(record.recipe.title) === queryTitle);
 }
 
 const calorieFilters = [
@@ -134,13 +213,42 @@ function LimitChips({
               onClick={() => onChange(option.value)}
               aria-pressed={active}
               className={cn(
-                "min-h-8 rounded-md border px-3 py-1 text-xs font-semibold transition-colors focus-ring",
+                "min-h-11 rounded-md border px-3 py-2 text-sm font-semibold transition-colors focus-ring",
                 active
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-input bg-background text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
               )}
             >
               {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DeviceChips({ value, onChange }: { value: CookingDevice; onChange: (value: CookingDevice) => void }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Cooking device</p>
+      <div className="flex flex-wrap gap-2">
+        {COOKING_DEVICE_VALUES.map((device) => {
+          const active = device === value;
+          return (
+            <button
+              key={device}
+              type="button"
+              onClick={() => onChange(device)}
+              aria-pressed={active}
+              className={cn(
+                "min-h-11 rounded-md border px-3 py-2 text-sm font-semibold transition-colors focus-ring",
+                active
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-input bg-background text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
+              )}
+            >
+              {COOKING_DEVICE_LABELS[device]}
             </button>
           );
         })}
@@ -167,38 +275,47 @@ function RecipeMatchCard({
       onClick={() => onOpen(record)}
       aria-label={`View ${record.recipe.title}`}
       className={cn(
-        "group grid w-full overflow-hidden rounded-lg border bg-background text-left shadow-soft transition hover:-translate-y-0.5 hover:bg-secondary/55 hover:shadow-lg focus-ring",
-        compact ? "grid-cols-[5.5rem_1fr]" : "sm:grid-cols-[8rem_1fr]"
+        "group grid w-full min-w-0 items-center overflow-hidden rounded-lg border bg-background text-left shadow-soft transition hover:-translate-y-0.5 hover:bg-secondary/55 hover:shadow-lg focus-ring",
+        compact ? "grid-cols-[5.25rem_minmax(0,1fr)]" : "sm:grid-cols-[8rem_minmax(0,1fr)]"
       )}
     >
-      <div className={cn("relative overflow-hidden bg-muted", compact ? "h-full min-h-24" : "aspect-[4/3] sm:aspect-auto")}>
-        <RecipeImage src={record.imagePath} alt="" width={360} height={270} className="size-full object-cover transition duration-300 group-hover:scale-105" />
-      </div>
-      <div className="min-w-0 space-y-2 p-3">
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="secondary" className="text-[0.65rem]">
+      <RecipeImageFrame
+        src={record.imagePath}
+        alt=""
+        width={360}
+        height={270}
+        data-testid="recipe-match-image-frame"
+        className={cn("relative self-center", compact ? "w-[5.25rem]" : "sm:w-32")}
+        imageClassName="transition duration-300 group-hover:scale-105"
+      />
+      <div className="flex min-h-20 min-w-0 flex-col justify-start gap-1.5 p-2 sm:p-2.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-1">
+          <Badge variant="secondary" className="px-1.5 py-0.5 text-[0.6rem] leading-none sm:text-[0.65rem]">
             {titleCase(record.recipe.kosherType)}
           </Badge>
           {record.catalog.kosherForPassover ? (
-            <Badge variant="outline" className="text-[0.65rem]">
+            <Badge variant="outline" className="px-1.5 py-0.5 text-[0.6rem] leading-none sm:text-[0.65rem]">
               Passover
             </Badge>
           ) : null}
+          <Badge variant="outline" className="max-w-[6.75rem] truncate px-1.5 py-0.5 text-[0.6rem] leading-none sm:max-w-[8rem] sm:text-[0.65rem]">
+            {record.catalog.cookingMethod}
+          </Badge>
         </div>
-        <p className="line-clamp-2 text-sm font-semibold leading-snug">{record.recipe.title}</p>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          <span>{record.catalog.occasion}</span>
+        <p className="line-clamp-2 text-[0.8rem] font-semibold leading-snug sm:text-sm">{record.recipe.title}</p>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.7rem] leading-tight text-muted-foreground sm:text-xs">
+          <span className="max-w-[8rem] truncate">{record.catalog.occasion}</span>
           <span className="inline-flex items-center gap-1">
-            <UsersRound className="size-3.5" />
+            <UsersRound className="size-3" />
             {record.recipe.servings}
           </span>
           <span className="inline-flex items-center gap-1">
-            <Clock className="size-3.5" />
+            <Clock className="size-3" />
             {formatMinutes(totalTime)}
           </span>
           {record.recipe.estimatedCaloriesPerServing ? (
             <span className="inline-flex items-center gap-1">
-              <Flame className="size-3.5" />~{record.recipe.estimatedCaloriesPerServing}
+              <Flame className="size-3" />~{record.recipe.estimatedCaloriesPerServing}
             </span>
           ) : null}
         </div>
@@ -207,19 +324,26 @@ function RecipeMatchCard({
   );
 }
 
-export function GeneratorClient() {
+type GeneratorClientProps = {
+  mode?: "brief" | "matches";
+};
+
+export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamString = searchParams.toString();
   const variationId = searchParams.get("variation");
   const profile = FIXED_SAFETY_PROFILE;
   const [recipeName, setRecipeName] = useState("");
   const [occasion, setOccasion] = useState("Weeknight dinner");
   const [cuisinePreference, setCuisinePreference] = useState("Mediterranean");
-  const [mainIngredient, setMainIngredient] = useState("chicken, salmon, eggs, or seasonal vegetables");
+  const [occasionIsCustom, setOccasionIsCustom] = useState(false);
+  const [cuisineIsCustom, setCuisineIsCustom] = useState(false);
+  const [mainIngredient, setMainIngredient] = useState(DEFAULT_MAIN_INGREDIENT);
   const [availableIngredients, setAvailableIngredients] = useState("");
   const [servings, setServings] = useState("2");
-  const [extraNotes, setExtraNotes] = useState("");
   const [kosherForPassover, setKosherForPassover] = useState(false);
+  const [cookingDevice, setCookingDevice] = useState<CookingDevice>("any");
   const [maxCaloriesPerServing, setMaxCaloriesPerServing] = useState<number | undefined>();
   const [maxTotalTimeMinutes, setMaxTotalTimeMinutes] = useState<number | undefined>();
   const [variationOf, setVariationOf] = useState<Recipe | undefined>();
@@ -227,16 +351,35 @@ export function GeneratorClient() {
   const [searchSeed, setSearchSeed] = useState("initial");
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [recentSearches, setRecentSearches] = useState<FinderSearch[]>([]);
+  const draftSaveTimeoutRef = useRef<number | undefined>(undefined);
+  const matchesSaveTimeoutRef = useRef<number | undefined>(undefined);
+  const draftSaveVersionRef = useRef(0);
+  const matchesSaveVersionRef = useRef(0);
+
+  const clearPendingFinderPersistence = useCallback(() => {
+    draftSaveVersionRef.current += 1;
+    matchesSaveVersionRef.current += 1;
+    if (draftSaveTimeoutRef.current) {
+      window.clearTimeout(draftSaveTimeoutRef.current);
+      draftSaveTimeoutRef.current = undefined;
+    }
+    if (matchesSaveTimeoutRef.current) {
+      window.clearTimeout(matchesSaveTimeoutRef.current);
+      matchesSaveTimeoutRef.current = undefined;
+    }
+  }, []);
 
   const applyFinderSearch = useCallback((search: FinderSearch) => {
     setRecipeName(search.recipeName);
     setOccasion(search.occasion);
     setCuisinePreference(search.cuisinePreference);
+    setOccasionIsCustom(!isSuggestedValue(search.occasion, occasionSuggestions));
+    setCuisineIsCustom(!isSuggestedValue(search.cuisinePreference, cuisineSuggestions));
     setMainIngredient(search.mainIngredient);
     setAvailableIngredients(search.availableIngredients);
     setServings(String(search.servings));
-    setExtraNotes(search.extraNotes);
     setKosherForPassover(search.kosherForPassover);
+    setCookingDevice(search.cookingDevice);
     setMaxCaloriesPerServing(search.maxCaloriesPerServing);
     setMaxTotalTimeMinutes(search.maxTotalTimeMinutes);
     setVariationOf(undefined);
@@ -244,26 +387,41 @@ export function GeneratorClient() {
 
   useEffect(() => {
     setRecentSearches(loadRecentSearches());
+    const urlSearch = finderSearchFromSearchParams(new URLSearchParams(searchParamString));
 
-    if (!variationId) {
-      const draft = loadFinderDraft();
-      if (draft) applyFinderSearch(draft);
+    if (urlSearch) {
+      applyFinderSearch(urlSearch);
+    }
+
+    if (variationId) {
+      const record = findRecipeById(variationId);
+      if (record) {
+        setVariationOf(record.recipe);
+        if (!urlSearch) {
+          setRecipeName("");
+          setOccasion("Variation request");
+          setCuisinePreference("Keep the same spirit, change the details");
+          setOccasionIsCustom(true);
+          setCuisineIsCustom(true);
+          setMainIngredient(record.recipe.ingredients[0]?.name.replace(/\([^)]*\)/g, "").trim() || "safe seasonal ingredients");
+          setAvailableIngredients("");
+          setKosherForPassover(false);
+          setCookingDevice("any");
+          setMaxCaloriesPerServing(undefined);
+          setMaxTotalTimeMinutes(undefined);
+        }
+      }
       setDraftLoaded(true);
       return;
     }
 
-    const record = findRecipeById(variationId);
-    if (record) {
-      setVariationOf(record.recipe);
-      setRecipeName("");
-      setOccasion("Variation request");
-      setCuisinePreference("Keep the same spirit, change the details");
-      setMainIngredient(record.recipe.ingredients[0]?.name.replace(/\([^)]*\)/g, "").trim() || "safe seasonal ingredients");
-      setAvailableIngredients("");
-      setExtraNotes(`Find a distinct catalog variation of "${record.recipe.title}" while preserving kosher and allergy safety.`);
+    if (!urlSearch) {
+      const draft = loadFinderDraft();
+      if (draft) applyFinderSearch(draft);
     }
+
     setDraftLoaded(true);
-  }, [applyFinderSearch, variationId]);
+  }, [applyFinderSearch, searchParamString, variationId]);
 
   useEffect(() => {
     const storedSeed = window.sessionStorage.getItem("koshertable.finderSeed.v1");
@@ -278,6 +436,10 @@ export function GeneratorClient() {
 
   const filteredMainIngredientSuggestions = filterSuggestionsForProfile(mainIngredientSuggestions, profile, { kosherForPassover });
   const filteredAvailableIngredientSuggestions = filterSuggestionsForProfile(availableIngredientSuggestions, profile, { kosherForPassover });
+  const selectedMainIngredient = mainIngredient.trim() === DEFAULT_MAIN_INGREDIENT ? "" : mainIngredient;
+  const sideSuggestions = filterSuggestionsForProfile(getSideSuggestionsForMainIngredient(selectedMainIngredient, { kosherForPassover }), profile, {
+    kosherForPassover
+  });
   const finderSearch = useMemo<FinderSearch>(
     () => ({
       recipeName,
@@ -286,15 +448,15 @@ export function GeneratorClient() {
       mainIngredient,
       availableIngredients,
       servings: Number(servings),
-      extraNotes,
       kosherForPassover,
+      cookingDevice,
       maxCaloriesPerServing,
       maxTotalTimeMinutes
     }),
     [
       availableIngredients,
       cuisinePreference,
-      extraNotes,
+      cookingDevice,
       kosherForPassover,
       mainIngredient,
       maxCaloriesPerServing,
@@ -304,6 +466,7 @@ export function GeneratorClient() {
       servings
     ]
   );
+  const hasIncompleteCustomSelect = (occasionIsCustom && !occasion.trim()) || (cuisineIsCustom && !cuisinePreference.trim());
   const catalogQuery = useMemo(
     () => ({
       ...finderSearch,
@@ -322,18 +485,75 @@ export function GeneratorClient() {
   );
 
   useEffect(() => {
-    if (!draftLoaded || variationOf) return;
-    const timeout = window.setTimeout(() => saveFinderDraft(finderSearch), 300);
-    return () => window.clearTimeout(timeout);
-  }, [draftLoaded, finderSearch, variationOf]);
+    if (!draftLoaded || variationOf || hasIncompleteCustomSelect) return;
+    const saveVersion = draftSaveVersionRef.current + 1;
+    draftSaveVersionRef.current = saveVersion;
+    draftSaveTimeoutRef.current = window.setTimeout(() => {
+      if (draftSaveVersionRef.current !== saveVersion) return;
+      saveFinderDraft(finderSearch);
+      draftSaveTimeoutRef.current = undefined;
+    }, 300);
+    return () => {
+      draftSaveVersionRef.current += 1;
+      if (draftSaveTimeoutRef.current) {
+        window.clearTimeout(draftSaveTimeoutRef.current);
+        draftSaveTimeoutRef.current = undefined;
+      }
+    };
+  }, [draftLoaded, finderSearch, hasIncompleteCustomSelect, variationOf]);
 
-  function rememberCurrentSearch() {
-    saveRecentSearch(finderSearch);
+  useEffect(() => {
+    if (!draftLoaded || variationOf || mode !== "matches" || hasIncompleteCustomSelect) return;
+    const saveVersion = matchesSaveVersionRef.current + 1;
+    matchesSaveVersionRef.current = saveVersion;
+    matchesSaveTimeoutRef.current = window.setTimeout(() => {
+      if (matchesSaveVersionRef.current !== saveVersion) return;
+      saveRecentSearch(finderSearch);
+      setRecentSearches(loadRecentSearches());
+      const params = finderSearchToSearchParams(finderSearch);
+      const nextSearchParamString = params.toString();
+      if (nextSearchParamString !== searchParamString && (nextSearchParamString || !searchParamString)) {
+        router.replace(nextSearchParamString ? `/find?${nextSearchParamString}` : "/find", { scroll: false });
+      }
+      matchesSaveTimeoutRef.current = undefined;
+    }, 300);
+    return () => {
+      matchesSaveVersionRef.current += 1;
+      if (matchesSaveTimeoutRef.current) {
+        window.clearTimeout(matchesSaveTimeoutRef.current);
+        matchesSaveTimeoutRef.current = undefined;
+      }
+    };
+  }, [draftLoaded, finderSearch, hasIncompleteCustomSelect, mode, router, searchParamString, variationOf]);
+
+  function rememberSearch(search: FinderSearch) {
+    clearPendingFinderPersistence();
+    saveFinderDraft(search);
+    saveRecentSearch(search);
     setRecentSearches(loadRecentSearches());
   }
 
+  function rememberCurrentSearch() {
+    rememberSearch(finderSearch);
+  }
+
+  function finderHref(path: "/find" | "/generate", search: FinderSearch) {
+    const params = finderSearchToSearchParams(search);
+    if (variationId) params.set("variation", variationId);
+    const query = params.toString();
+    return query ? `${path}?${query}` : path;
+  }
+
+  function openFind(search: FinderSearch, replace = false) {
+    const href = finderHref("/find", search);
+    if (replace) router.replace(href);
+    else router.push(href);
+  }
+
   function refreshMatches() {
-    setSearchSeed(globalThis.crypto?.randomUUID?.() ?? `${searchSeed}-${Date.now()}`);
+    const nextSeed = globalThis.crypto?.randomUUID?.() ?? `${searchSeed}-${Date.now()}`;
+    window.sessionStorage.setItem("koshertable.finderSeed.v1", nextSeed);
+    setSearchSeed(nextSeed);
   }
 
   function clearLimits() {
@@ -357,7 +577,7 @@ export function GeneratorClient() {
     openRecipe(match);
   }
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  function submitBrief(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
@@ -368,8 +588,8 @@ export function GeneratorClient() {
       mainIngredient,
       availableIngredients,
       servings: Number(servings),
-      extraNotes,
       kosherForPassover,
+      cookingDevice,
       maxCaloriesPerServing,
       maxTotalTimeMinutes,
       variationOf
@@ -380,58 +600,48 @@ export function GeneratorClient() {
       return;
     }
 
-    const nextSeed = globalThis.crypto?.randomUUID?.() ?? `${searchSeed}-${Date.now()}`;
-    const pool = searchCatalogRecipes(request.data, 18, { seed: nextSeed, varyWithinTopMatches: true, poolSize: 24 });
-    const safePool = pool.filter((record) => validateRecipeSafety(record.recipe, profile).ok);
-    const exactMatch = safePool.find((match) => exactTitleRequested(match, request.data.recipeName));
-
-    if (safePool.length === 0) {
-      setError("No matching catalog recipe was found.");
-      return;
-    }
-
-    if (request.data.recipeName && exactMatch) {
-      setSearchSeed(nextSeed);
-    } else {
-      const viewedCatalogIds = new Set(loadViewedCatalogIds());
-      const firstFreshMatch = safePool.find((match) => !viewedCatalogIds.has(match.id));
-      setSearchSeed(`${nextSeed}-${firstFreshMatch?.id ?? safePool[0]?.id ?? "matches"}`);
-    }
-
-    rememberCurrentSearch();
+    const nextSearch = finderSearchSchema.parse(request.data);
+    clearPendingFinderPersistence();
+    saveFinderDraft(nextSearch);
+    saveRecentSearch(nextSearch);
+    setRecentSearches(loadRecentSearches());
+    openFind(nextSearch);
   }
 
-  return (
-    <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-      <section className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-normal sm:text-4xl">Find meal ideas</h1>
-        <p className="text-muted-foreground">
-          Search nightshade-free, tomato-free kosher meals for two from the bundled catalog.
-        </p>
+  const matchesSection = (
+    <section className="space-y-4">
+      <h1 className="sr-only">Browse</h1>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <div
+          title="Kosher for Passover"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-semibold uppercase tracking-normal text-muted-foreground"
+        >
+          <span>KFP</span>
+          <Switch
+            id="browseKosherForPassover"
+            checked={kosherForPassover}
+            onCheckedChange={setKosherForPassover}
+            aria-label="Browse kosher for Passover"
+          />
+        </div>
+        <Button type="button" variant="outline" onClick={refreshMatches}>
+          <Shuffle className="size-4" />
+          Shuffle
+        </Button>
+      </div>
 
-        <Card>
-          <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
-            <div>
-              <CardTitle>Recipe matches</CardTitle>
-              <CardDescription>{recipeMatches.length} clickable matches from the local catalog.</CardDescription>
+      <Card>
+        <CardContent className="space-y-3 p-3 sm:p-4 lg:p-5">
+          <div className="grid gap-3 rounded-lg border bg-background/65 p-3 lg:grid-cols-2">
+            <LimitChips label="Calories" value={maxCaloriesPerServing} options={calorieFilters} onChange={setMaxCaloriesPerServing} />
+            <LimitChips label="Total time" value={maxTotalTimeMinutes} options={timeFilters} onChange={setMaxTotalTimeMinutes} />
+            <div className="rounded-md border border-input bg-background p-3 lg:col-span-2">
+              <DeviceChips value={cookingDevice} onChange={setCookingDevice} />
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={refreshMatches}>
-              <Shuffle className="size-4" />
-              Shuffle
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid gap-3 rounded-lg border bg-background/65 p-3 sm:grid-cols-2">
-              <LimitChips
-                label="Calories"
-                value={maxCaloriesPerServing}
-                options={calorieFilters}
-                onChange={setMaxCaloriesPerServing}
-              />
-              <LimitChips label="Total time" value={maxTotalTimeMinutes} options={timeFilters} onChange={setMaxTotalTimeMinutes} />
-            </div>
-            {recipeMatches.length > 0 ? (
-              recipeMatches.map((record) => (
+          </div>
+          {recipeMatches.length > 0 ? (
+            <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3 min-[1800px]:grid-cols-4">
+              {recipeMatches.map((record) => (
                 <RecipeMatchCard
                   key={record.id}
                   record={record}
@@ -441,62 +651,66 @@ export function GeneratorClient() {
                     openRecipe(match);
                   }}
                 />
-              ))
-            ) : (
-              <div className="space-y-3 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                <p>No matches under those limits. Loosen the search, turn off Passover, or use Surprise Me.</p>
-                {(maxCaloriesPerServing || maxTotalTimeMinutes) ? (
-                  <Button type="button" variant="outline" size="sm" onClick={clearLimits}>
-                    Clear calorie/time filters
-                  </Button>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+              <p>No matches under those filters. Loosen Passover, calorie, or time filters, or adjust the Find brief.</p>
+              {maxCaloriesPerServing || maxTotalTimeMinutes ? (
+                <Button type="button" variant="outline" size="sm" onClick={clearLimits}>
+                  Clear calorie/time filters
+                </Button>
+              ) : null}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {recentSearches.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent searches</CardTitle>
+            <CardDescription>Tap to restore the finder.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3 min-[1800px]:grid-cols-4">
+            {recentSearches.map((search, index) => (
+              <button
+                key={`${summarizeSearch(search)}-${index}`}
+                type="button"
+                data-testid="recent-search"
+                onClick={() => {
+                  setError("");
+                  clearPendingFinderPersistence();
+                  applyFinderSearch(search);
+                  saveFinderDraft(search);
+                  openFind(search, true);
+                }}
+                className="w-full rounded-lg border bg-background p-3 text-left transition-colors hover:bg-secondary focus-ring"
+              >
+                <span className="block text-sm font-semibold">{summarizeSearch(search)}</span>
+                {search.availableIngredients ? (
+                  <span className="mt-1 block text-xs text-muted-foreground line-clamp-2">{search.availableIngredients}</span>
                 ) : null}
-              </div>
-            )}
+              </button>
+            ))}
           </CardContent>
         </Card>
+      ) : null}
+    </section>
+  );
 
-        {recentSearches.length > 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent searches</CardTitle>
-              <CardDescription>Tap to restore the finder.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {recentSearches.map((search, index) => (
-                <button
-                  key={`${summarizeSearch(search)}-${index}`}
-                  type="button"
-                  onClick={() => {
-                    setError("");
-                    applyFinderSearch(search);
-                  }}
-                  className="w-full rounded-lg border bg-background p-3 text-left transition-colors hover:bg-secondary focus-ring"
-                >
-                  <span className="block text-sm font-semibold">{summarizeSearch(search)}</span>
-                  {search.availableIngredients || search.extraNotes ? (
-                    <span className="mt-1 block text-xs text-muted-foreground line-clamp-2">
-                      {[search.availableIngredients, search.extraNotes].filter(Boolean).join(" · ")}
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-            </CardContent>
-          </Card>
-        ) : null}
-      </section>
+  if (mode === "matches") {
+    return <div className="mx-auto max-w-[2200px] space-y-5">{matchesSection}</div>;
+  }
 
+  return (
+    <div className="mx-auto max-w-[2200px] space-y-4">
+      <h1 className="sr-only">Find</h1>
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="size-5 text-primary" />
-            Recipe brief
-          </CardTitle>
-          <CardDescription>Be specific when you care. Use Surprise Me when you do not. Both are valid adult strategies.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-5" onSubmit={submit}>
+        <CardContent className="p-4 sm:p-5 lg:p-6">
+          <form className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,0.58fr)] xl:items-start" onSubmit={submitBrief}>
             {error ? (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="xl:col-span-2">
                 <AlertCircle className="size-4" />
                 <AlertTitle>Search blocked</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
@@ -504,132 +718,112 @@ export function GeneratorClient() {
             ) : null}
 
             {variationOf ? (
-              <Alert>
+              <Alert className="xl:col-span-2">
                 <AlertTitle>Variation mode</AlertTitle>
                 <AlertDescription>Finding a distinct catalog variation of {variationOf.title}.</AlertDescription>
               </Alert>
             ) : null}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="recipeName">
-                Search by recipe name
-              </label>
-              <Input
-                id="recipeName"
-                value={recipeName}
-                onChange={(event) => setRecipeName(event.target.value)}
-                placeholder="Try salmon, feta, chicken, couscous..."
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="occasion">
-                  Occasion
-                </label>
-                <Input id="occasion" value={occasion} onChange={(event) => setOccasion(event.target.value)} placeholder="Shabbat dinner" />
-                <SuggestionChips label="Occasion" suggestions={occasionSuggestions} onPick={setOccasion} />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="cuisinePreference">
-                  Cuisine preference
-                </label>
-                <Input
-                  id="cuisinePreference"
-                  value={cuisinePreference}
-                  onChange={(event) => setCuisinePreference(event.target.value)}
-                  placeholder="Sephardi, Ashkenazi, Mediterranean"
-                />
-                <SuggestionChips label="Cuisine" suggestions={cuisineSuggestions} onPick={setCuisinePreference} />
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-[1fr_11rem]">
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="mainIngredient">
-                  Main protein or veggie
-                </label>
-                <Input
-                  id="mainIngredient"
-                  value={mainIngredient}
-                  onChange={(event) => setMainIngredient(event.target.value)}
-                  placeholder="Chicken, lentils, mushrooms"
-                />
-                <SuggestionChips label="Main ingredient" suggestions={filteredMainIngredientSuggestions} onPick={setMainIngredient} />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="servings">
-                  Servings
-                </label>
-                <Select value={servings} onValueChange={setServings}>
-                  <SelectTrigger id="servings">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[2, 4, 6, 8, 10, 12].map((value) => (
-                      <SelectItem key={value} value={String(value)}>
-                        {value}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4">
-              <div className="space-y-1">
+            <div className="space-y-2 xl:col-start-2 xl:row-start-2">
+              <div className="flex min-h-14 items-center justify-between gap-3 rounded-lg border bg-background/65 px-3 py-2">
                 <label className="text-sm font-medium" htmlFor="kosherForPassover">
                   Kosher for Passover
                 </label>
-                <p className="text-xs leading-5 text-muted-foreground">
-                  Strict mode: no chametz and no kitniyot.
-                </p>
+                <Switch id="kosherForPassover" checked={kosherForPassover} onCheckedChange={setKosherForPassover} aria-label="Kosher for Passover" />
               </div>
-              <Switch id="kosherForPassover" checked={kosherForPassover} onCheckedChange={setKosherForPassover} aria-label="Kosher for Passover" />
+              <div className="rounded-lg border bg-background/65 p-3">
+                <DeviceChips value={cookingDevice} onChange={setCookingDevice} />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="availableIngredients">
-                Ingredients on hand or want to include
-              </label>
-              <Textarea
-                id="availableIngredients"
-                value={availableIngredients}
-                onChange={(event) => setAvailableIngredients(event.target.value)}
-                placeholder="Carrots, onions, rice, leftover chicken..."
-              />
-              <SuggestionChips
-                label="Ingredients on hand"
-                suggestions={filteredAvailableIngredientSuggestions}
-                onPick={(value) => setAvailableIngredients((current) => appendSuggestion(current, value))}
-              />
+            <div className="space-y-4 xl:col-start-1 xl:row-span-2 xl:row-start-2">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SelectWithCustom
+                  id="occasion"
+                  label="Occasion"
+                  value={occasion}
+                  suggestions={occasionSuggestions}
+                  custom={occasionIsCustom}
+                  customPlaceholder="Sunday brunch"
+                  onChange={setOccasion}
+                  onCustomChange={setOccasionIsCustom}
+                />
+
+                <SelectWithCustom
+                  id="cuisinePreference"
+                  label="Cuisine preference"
+                  value={cuisinePreference}
+                  suggestions={cuisineSuggestions}
+                  custom={cuisineIsCustom}
+                  customPlaceholder="Persian, Moroccan, modern kosher..."
+                  onChange={setCuisinePreference}
+                  onCustomChange={setCuisineIsCustom}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-[1fr_11rem]">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="mainIngredient">
+                    Main protein or veggie
+                  </label>
+                  <Input
+                    id="mainIngredient"
+                    value={mainIngredient}
+                    onChange={(event) => setMainIngredient(event.target.value)}
+                    placeholder="Chicken, lentils, mushrooms"
+                  />
+                  <SuggestionChips label="Main ingredient" suggestions={filteredMainIngredientSuggestions} onPick={setMainIngredient} />
+                  <SuggestionChips
+                    label="Suggested sides"
+                    caption="Suggested sides"
+                    suggestions={sideSuggestions}
+                    onPick={(value) => setAvailableIngredients((current) => appendSuggestion(current, value))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="servings">
+                    Servings
+                  </label>
+                  <Select value={servings} onValueChange={setServings}>
+                    <SelectTrigger id="servings">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[2, 4, 6, 8, 10, 12].map((value) => (
+                        <SelectItem key={value} value={String(value)}>
+                          {value}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="availableIngredients">
+                  Ingredients on hand or want to include
+                </label>
+                <Textarea
+                  id="availableIngredients"
+                  value={availableIngredients}
+                  onChange={(event) => setAvailableIngredients(event.target.value)}
+                  placeholder="Carrots, onions, quinoa, fresh herbs..."
+                />
+                <SuggestionChips
+                  label="Ingredients on hand"
+                  suggestions={filteredAvailableIngredientSuggestions}
+                  onPick={(value) => setAvailableIngredients((current) => appendSuggestion(current, value))}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="extraNotes">
-                Extra notes
-              </label>
-              <Textarea
-                id="extraNotes"
-                value={extraNotes}
-                onChange={(event) => setExtraNotes(event.target.value)}
-                placeholder="Low cleanup, make ahead, no cilantro, kid-friendly..."
-              />
-              <SuggestionChips
-                label="Extra notes"
-                suggestions={extraNoteSuggestions}
-                onPick={(value) => setExtraNotes((current) => appendSuggestion(current, value))}
-              />
-            </div>
-
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <div className="grid gap-3 sm:grid-cols-2 xl:col-start-2 xl:row-start-3 xl:grid-cols-1">
               <Button type="button" variant="outline" onClick={surprise}>
                 <Dice5 />
                 Surprise Me
               </Button>
-              <Button type="submit" size="lg">
+              <Button type="submit" variant="outline">
                 <Search />
                 Find Recipe
               </Button>

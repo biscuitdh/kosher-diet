@@ -46,17 +46,20 @@ describe("schemas", () => {
     expect(request.availableIngredients).toBe("carrots, onions, quinoa");
     expect(request.servings).toBe(2);
     expect(request.kosherForPassover).toBe(false);
+    expect(request.cookingDevice).toBe("any");
     expect(request.profile).toEqual(FIXED_SAFETY_PROFILE);
   });
 
-  it("accepts kosher for Passover finder requests", () => {
+  it("accepts kosher for Passover finder requests with device and limits", () => {
     const request = generationRequestSchema.parse({
       kosherForPassover: true,
+      cookingDevice: "air-fryer",
       maxCaloriesPerServing: 500,
       maxTotalTimeMinutes: 45
     });
 
     expect(request.kosherForPassover).toBe(true);
+    expect(request.cookingDevice).toBe("air-fryer");
     expect(request.maxCaloriesPerServing).toBe(500);
     expect(request.maxTotalTimeMinutes).toBe(45);
   });
@@ -66,6 +69,7 @@ describe("schemas", () => {
 
     expect(search.maxCaloriesPerServing).toBeUndefined();
     expect(search.maxTotalTimeMinutes).toBeUndefined();
+    expect(search.cookingDevice).toBe("any");
   });
 
   it("rejects oversized ingredients on hand text", () => {
@@ -81,5 +85,6 @@ describe("schemas", () => {
     expect(generationRequestSchema.safeParse({ maxTotalTimeMinutes: 0 }).success).toBe(false);
     expect(generationRequestSchema.safeParse({ maxCaloriesPerServing: 3001 }).success).toBe(false);
     expect(generationRequestSchema.safeParse({ maxTotalTimeMinutes: 1441 }).success).toBe(false);
+    expect(generationRequestSchema.safeParse({ cookingDevice: "microwave" }).success).toBe(false);
   });
 });
