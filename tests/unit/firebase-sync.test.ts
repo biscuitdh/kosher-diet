@@ -1,10 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { firebaseConfigured, loadStoredSession, saveSessionToStorage, type FirebaseSession } from "@/lib/firebase-sync";
 
+const FIREBASE_ENV_KEYS = [
+  "NEXT_PUBLIC_FIREBASE_API_KEY",
+  "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+  "NEXT_PUBLIC_GOOGLE_CLIENT_ID"
+] as const;
+
+type FirebaseEnvKey = (typeof FIREBASE_ENV_KEYS)[number];
+
+function stubFirebaseEnv(values: Partial<Record<FirebaseEnvKey, string>> = {}) {
+  for (const key of FIREBASE_ENV_KEYS) {
+    vi.stubEnv(key, "");
+  }
+
+  for (const [key, value] of Object.entries(values) as Array<[FirebaseEnvKey, string]>) {
+    vi.stubEnv(key, value);
+  }
+}
+
 describe("firebase sync helpers", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.unstubAllEnvs();
+    stubFirebaseEnv();
   });
 
   afterEach(() => {
@@ -16,16 +35,20 @@ describe("firebase sync helpers", () => {
   });
 
   it("requires a Google OAuth client ID for sync sign-in", () => {
-    vi.stubEnv("NEXT_PUBLIC_FIREBASE_API_KEY", "test-api-key");
-    vi.stubEnv("NEXT_PUBLIC_FIREBASE_PROJECT_ID", "koshertable-prod");
+    stubFirebaseEnv({
+      NEXT_PUBLIC_FIREBASE_API_KEY: "test-api-key",
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: "koshertable-prod"
+    });
 
     expect(firebaseConfigured()).toBe(false);
   });
 
   it("detects configured Firebase public client settings", () => {
-    vi.stubEnv("NEXT_PUBLIC_FIREBASE_API_KEY", "test-api-key");
-    vi.stubEnv("NEXT_PUBLIC_FIREBASE_PROJECT_ID", "koshertable-prod");
-    vi.stubEnv("NEXT_PUBLIC_GOOGLE_CLIENT_ID", "google-client-id.apps.googleusercontent.com");
+    stubFirebaseEnv({
+      NEXT_PUBLIC_FIREBASE_API_KEY: "test-api-key",
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: "koshertable-prod",
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: "google-client-id.apps.googleusercontent.com"
+    });
 
     expect(firebaseConfigured()).toBe(true);
   });
