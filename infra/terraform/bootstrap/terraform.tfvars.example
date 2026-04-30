@@ -1,0 +1,11 @@
+project_id         = "koshertable-prod"
+project_name       = "KosherTable Prod"
+billing_account_id = "000000-000000-000000"
+
+# If your Google account is not under an organization, create the project in
+# the Cloud Console first and set create_project = false.
+create_project  = true
+organization_id = "123456789012"
+# folder_id     = "folders/123456789012"
+
+state_bucket_name = "koshertable-prod-tfstate"

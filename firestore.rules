@@ -1,0 +1,29 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email_verified == true;
+    }
+
+    function isAllowedHouseholdUser() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/allowed_users/$(request.auth.token.email));
+    }
+
+    match /allowed_users/{email} {
+      allow get: if signedIn() && request.auth.token.email == email;
+      allow list, create, update, delete: if false;
+    }
+
+    match /households/default/{document=**} {
+      allow read, write: if isAllowedHouseholdUser();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

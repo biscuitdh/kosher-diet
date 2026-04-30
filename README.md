@@ -1,6 +1,6 @@
 # KosherTable
 
-KosherTable is a Next.js 15 MVP for kosher, nightshade-free, tomato-free meal planning. It uses a bundled 1,000-recipe catalog, supports shared household favorites and groceries, can sync them across devices with Supabase, and stays static: no recipe-generation API or paid inference path is exposed.
+KosherTable is a Next.js 15 MVP for kosher, nightshade-free, tomato-free meal planning. It uses a bundled 1,000-recipe catalog, supports shared household favorites and groceries, can sync them across devices with Firebase Auth + Firestore, and stays static: no recipe-generation API or paid inference path is exposed.
 
 ## Primary Recommendation
 
@@ -13,7 +13,7 @@ docker compose up web-dev
 
 Open `http://localhost:3000`.
 
-The app works without cloud services. To sync shared favorites and groceries across devices, create a Supabase project, run `docs/supabase-schema.sql`, then set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+The app works without cloud services. To sync shared favorites and groceries across devices, create a Firebase project, enable Google sign-in, deploy `firestore.rules`, seed `allowed_users`, then set `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, and `NEXT_PUBLIC_GOOGLE_CLIENT_ID`. Full launch steps live in `docs/firebase-gcp-launch.md`.
 
 ## Alternatives
 
@@ -95,14 +95,13 @@ If Wi-Fi is not `en0`, check the active interface in macOS network settings. Kee
   - `koshertable.recipeProfiles.v1`
   - `koshertable.selectedRecipeProfileId.v1`
   - `koshertable.groceryItems.v1`
-  - `koshertable.supabaseSession.v1`
+  - `koshertable.firebaseSession.v1`
   - `koshertable.finderDraft.v1`
   - `koshertable.recentSearches.v1`
-- Optional Supabase tables:
-  - `koshertable_recipe_profiles`
-  - `koshertable_favorite_recipes`
-  - `koshertable_grocery_items`
-  - `koshertable_user_preferences`
+- Optional Firebase/Firestore sync:
+  - Firebase Auth Google sign-in.
+  - `allowed_users/{email}` whitelist documents.
+  - shared `households/default` Firestore documents for favorites, groceries, and household preferences.
 - Recipe images:
   - 112 local dish-aware recipe image assets in `public/images/recipes/real/` and `public/images/recipes/ai/`
   - optional per-recipe catalog thumbnails in `public/images/recipes/catalog/catalog-0001.webp` through `catalog-1000.webp`
@@ -152,7 +151,7 @@ docker compose run --rm web-dev npm run images:check
 - The default catalog flow does not need API keys, a database, or paid inference.
 - The fixed food safety profile blocks nightshades and tomatoes.
 - Kosher validation still blocks pork, shellfish, non-kosher fish, meat/dairy mixing risks, blood, non-kosher gelatin, and non-kosher wine.
-- Supabase public anon keys can go to the browser; row-level security in `docs/supabase-schema.sql` scopes all synced data to the signed-in user.
+- Firebase public web config can go to the browser; `firestore.rules` restricts synced household data to signed-in whitelisted emails.
 - Every bundled catalog recipe is schema-validated and checked against the fixed safety profile.
 - Shopping buttons are static outbound links. Grocery-list Walmart cart prompts are agent handoffs only; the app does not log in, scrape, checkout, or place orders.
 - Kosher for Passover mode is strict no-kitniyot: no chametz, rice, corn, beans, lentils, chickpeas, soy, tofu, sesame, tahini, mustard, buckwheat, caraway, cardamom, fennel seeds, peas, or similar kitniyot.
@@ -193,6 +192,29 @@ npm run build:github
 
 This writes the static site to `out/` with `NEXT_PUBLIC_BASE_PATH=/kosher-diet`. If the repository is renamed, update `build:github` before deploying.
 
+Firebase/GCP static export for `https://kosher.netsbyvets.org`:
+
+```bash
+npm run build:firebase
+firebase deploy --only hosting
+```
+
+This writes the static site to `out/` without a base path so Firebase Hosting serves it from `/`. See `docs/firebase-gcp-launch.md` for the GCP project, Firebase Auth/Firestore, whitelist, and Cloudflare DNS steps.
+
+Firebase/GCP infrastructure is managed with Terraform in `infra/terraform`:
+
+```bash
+cd infra/terraform/bootstrap
+terraform init
+terraform plan -out=tfplan
+
+cd ../prod
+terraform init
+terraform plan -out=tfplan
+```
+
+Terraform manages the `$5` monthly budget alert, Firebase/Firestore/Auth setup, Google sign-in provider, Cloudflare DNS records, and GitHub Workload Identity deploy access. GitHub Actions deploys Firebase preview channels for pull requests and live Hosting from `main`.
+
 For the current free testing setup, production is the `gh-pages` branch. GitHub Pages should be set to **Settings → Pages → Source → Deploy from a branch**, then **gh-pages / root**. The Pages URL is:
 
 ```text
@@ -201,7 +223,7 @@ https://biscuitdh.github.io/kosher-diet/
 
 ### Production Deploy Gate
 
-Do not auto-deploy from `main`. Do not add a GitHub Actions publisher unless the deployment policy changes.
+Firebase deploys may auto-deploy from `main` after the Terraform/GitHub variables are configured. GitHub Pages remains manually gated unless that deployment policy changes.
 
 Before any production push:
 

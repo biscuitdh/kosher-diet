@@ -10,16 +10,15 @@ import {
   type LocalDataChangeDetail
 } from "@/lib/storage";
 import {
-  consumeMagicLinkSessionFromUrl,
+  firebaseConfigured,
   loadStoredSession,
   pushLocalChangeToCloud,
   saveSessionToStorage,
-  sendMagicLink,
-  supabaseConfigured,
+  signInWithGoogle,
   synchronizeLocalAndCloud,
-  type SupabaseSession,
+  type FirebaseSession,
   type SyncStatus
-} from "@/lib/supabase-sync";
+} from "@/lib/firebase-sync";
 import type { RecipeProfile } from "@/lib/schemas";
 
 type RecipeProfileContextValue = {
@@ -28,8 +27,8 @@ type RecipeProfileContextValue = {
   syncConfigured: boolean;
   syncStatus: SyncStatus;
   syncError: string;
-  session: SupabaseSession | undefined;
-  signInWithEmail: (email: string) => Promise<void>;
+  session: FirebaseSession | undefined;
+  signInWithGoogleAccount: () => Promise<void>;
   signOut: () => void;
 };
 
@@ -37,10 +36,10 @@ const RecipeProfileContext = createContext<RecipeProfileContextValue | undefined
 
 export function RecipeProfileProvider({ children }: { children: ReactNode }) {
   const [selectedProfile, setSelectedProfile] = useState<RecipeProfile>(DEFAULT_RECIPE_PROFILE);
-  const [session, setSession] = useState<SupabaseSession | undefined>();
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>(supabaseConfigured() ? "anonymous" : "offline");
+  const [session, setSession] = useState<FirebaseSession | undefined>();
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(firebaseConfigured() ? "anonymous" : "offline");
   const [syncError, setSyncError] = useState("");
-  const syncConfigured = supabaseConfigured();
+  const syncConfigured = firebaseConfigured();
 
   const refreshProfiles = useCallback(() => {
     normalizeStoredHouseholdData();
@@ -53,7 +52,7 @@ export function RecipeProfileProvider({ children }: { children: ReactNode }) {
   }, [refreshProfiles]);
 
   const synchronize = useCallback(
-    async (nextSession: SupabaseSession) => {
+    async (nextSession: FirebaseSession) => {
       setSyncStatus("syncing");
       setSyncError("");
       try {
@@ -75,8 +74,7 @@ export function RecipeProfileProvider({ children }: { children: ReactNode }) {
     async function loadSession() {
       setSyncStatus("syncing");
       try {
-        const linkSession = await consumeMagicLinkSessionFromUrl();
-        const storedSession = linkSession ?? await loadStoredSession();
+        const storedSession = await loadStoredSession();
         if (cancelled) return;
         if (!storedSession) {
           setSyncStatus("anonymous");
@@ -89,7 +87,7 @@ export function RecipeProfileProvider({ children }: { children: ReactNode }) {
         saveSessionToStorage(undefined);
         setSession(undefined);
         setSyncStatus("error");
-        setSyncError(error instanceof Error ? error.message : "Could not restore Supabase session.");
+        setSyncError(error instanceof Error ? error.message : "Could not restore Firebase session.");
       }
     }
 
@@ -121,24 +119,27 @@ export function RecipeProfileProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(LOCAL_DATA_CHANGED_EVENT, syncLocalChange);
   }, [session, syncConfigured]);
 
-  const signInWithEmail = useCallback(
-    async (email: string) => {
+  const signInWithGoogleAccount = useCallback(
+    async () => {
       if (!syncConfigured) {
         setSyncStatus("offline");
-        setSyncError("Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable sync.");
+        setSyncError("Add Firebase config and NEXT_PUBLIC_GOOGLE_CLIENT_ID to enable sync.");
         return;
       }
       setSyncStatus("syncing");
       setSyncError("");
       try {
-        await sendMagicLink(email);
-        setSyncStatus("anonymous");
+        const nextSession = await signInWithGoogle();
+        setSession(nextSession);
+        await synchronize(nextSession);
       } catch (error) {
+        saveSessionToStorage(undefined);
+        setSession(undefined);
         setSyncStatus("error");
-        setSyncError(error instanceof Error ? error.message : "Could not send the sign-in link.");
+        setSyncError(error instanceof Error ? error.message : "Could not sign in with Google.");
       }
     },
-    [syncConfigured]
+    [syncConfigured, synchronize]
   );
 
   const signOut = useCallback(() => {
@@ -158,10 +159,10 @@ export function RecipeProfileProvider({ children }: { children: ReactNode }) {
       syncStatus,
       syncError,
       session,
-      signInWithEmail,
+      signInWithGoogleAccount,
       signOut
     }),
-    [refreshProfiles, selectedProfile, session, signInWithEmail, signOut, syncConfigured, syncError, syncStatus]
+    [refreshProfiles, selectedProfile, session, signInWithGoogleAccount, signOut, syncConfigured, syncError, syncStatus]
   );
 
   return createElement(RecipeProfileContext.Provider, { value }, children);
