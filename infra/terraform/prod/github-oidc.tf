@@ -5,7 +5,7 @@ locals {
     "roles/firebasehosting.admin",
     "roles/serviceusage.serviceUsageConsumer"
   ])
-  github_workflow_ref = "${var.github_repository}/.github/workflows/firebase-hosting.yml@refs/heads/main"
+  github_workflow_ref_prefix = "${var.github_repository}/.github/workflows/firebase-hosting.yml@"
 }
 
 resource "google_service_account" "github_deploy" {
@@ -41,7 +41,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   display_name                       = "GitHub OIDC"
   description                        = "OIDC trust for ${var.github_repository}."
 
-  attribute_condition = "assertion.repository == '${var.github_repository}' && assertion.workflow_ref == '${local.github_workflow_ref}' && (assertion.ref == 'refs/heads/main' || assertion.event_name == 'pull_request')"
+  attribute_condition = "assertion.repository == '${var.github_repository}' && assertion.workflow_ref.startsWith('${local.github_workflow_ref_prefix}') && (assertion.ref == 'refs/heads/main' || assertion.event_name == 'pull_request')"
 
   attribute_mapping = {
     "google.subject"       = "assertion.sub"
