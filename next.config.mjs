@@ -13,6 +13,7 @@ const nextConfig = {
   images: {
     unoptimized: isStaticExport
   },
+  devIndicators: false,
   poweredByHeader: false,
   reactStrictMode: true,
   trailingSlash: isStaticExport

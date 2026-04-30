@@ -1,47 +1,57 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, Clock, Copy, ExternalLink, Flame, Heart, RefreshCw, ShoppingCart, UsersRound } from "lucide-react";
-import { RecipeProfileSelector } from "@/components/recipe-profile-selector";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Clock, Copy, ExternalLink, Flame, Heart, RefreshCw, ShoppingCart, UsersRound } from "lucide-react";
+import { useRecipeProfile } from "@/components/recipe-profile-context";
 import { RecipeImageFrame } from "@/components/recipe/recipe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  addRecipeIngredientToGroceryList,
   addRecipeIngredientsToGroceryList,
   findRecipeById,
-  getSelectedRecipeProfile,
   isRecipeSaved,
   removeSavedRecipe,
   upsertSavedRecipe
 } from "@/lib/storage";
-import type { RecipeProfile, RecipeRecord, SavedRecipe } from "@/lib/schemas";
-import { formatIngredientForCopy, shoppingLinksForIngredient } from "@/lib/shopping";
+import type { RecipeIngredient, RecipeRecord, SavedRecipe } from "@/lib/schemas";
+import { formatIngredientForCopy, getShoppingName, isKosherMeatSearch, shoppingLinksForIngredient } from "@/lib/shopping";
 import { formatMinutes, titleCase } from "@/lib/utils";
 
 type RecipeDetailClientProps = {
   id: string;
 };
 
+function recipeDetailNotes(notes: string) {
+  return notes
+    .replace(/,\s*and built from Walmart\/Wegmans-friendly ingredients with specialty kosher sourcing where it helps\.?/i, ".")
+    .trim();
+}
+
+function recipeDetailStoreLinks(ingredient: RecipeIngredient) {
+  const shoppingName = getShoppingName(ingredient);
+  if (!isKosherMeatSearch(shoppingName)) return [];
+  return shoppingLinksForIngredient(ingredient).filter((link) => link.store !== "walmart" && link.store !== "wegmans");
+}
+
 export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
+  const { selectedProfile } = useRecipeProfile();
   const [record, setRecord] = useState<RecipeRecord | SavedRecipe | undefined>();
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
   const [isSaved, setIsSaved] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<RecipeProfile | undefined>();
   const [loaded, setLoaded] = useState(false);
   const [copiedItem, setCopiedItem] = useState("");
   const [groceryMessage, setGroceryMessage] = useState("");
 
   useEffect(() => {
     const found = findRecipeById(id);
-    const profile = getSelectedRecipeProfile();
     setRecord(found);
-    setSelectedProfile(profile);
-    setIsSaved(isRecipeSaved(id, profile.id));
+    setIsSaved(isRecipeSaved(id, selectedProfile.id));
     setLoaded(true);
-  }, [id]);
+  }, [id, selectedProfile.id]);
 
   const totalTime = useMemo(() => {
     if (!record) return 0;
@@ -59,7 +69,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
 
   function toggleSave() {
     if (!record) return;
-    const profileId = selectedProfile?.id ?? getSelectedRecipeProfile().id;
+    const profileId = selectedProfile.id;
     if (isSaved) {
       removeSavedRecipe(record.id, profileId);
       setIsSaved(false);
@@ -79,15 +89,15 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
 
   function addGroceries() {
     if (!record) return;
-    const profileId = selectedProfile?.id ?? getSelectedRecipeProfile().id;
-    const result = addRecipeIngredientsToGroceryList(record, profileId);
+    const result = addRecipeIngredientsToGroceryList(record, selectedProfile.id);
     setGroceryMessage(`Grocery list updated: ${result.added} added, ${result.updated} updated.`);
   }
 
-  const handleProfileChange = useCallback((profile: RecipeProfile) => {
-    setSelectedProfile(profile);
-    setIsSaved(isRecipeSaved(id, profile.id));
-  }, [id]);
+  function addIngredient(ingredient: RecipeIngredient) {
+    if (!record) return;
+    const result = addRecipeIngredientToGroceryList(ingredient, record, selectedProfile.id);
+    setGroceryMessage(`${ingredient.name} ${result.added ? "added to" : "updated in"} groceries.`);
+  }
 
   async function copyText(text: string, copiedLabel: string) {
     try {
@@ -124,7 +134,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
   const ingredientListText = record.recipe.ingredients.map(formatIngredientForCopy).join("\n");
 
   return (
-    <article className="mx-auto max-w-6xl space-y-6">
+    <article className="mx-auto max-w-[1900px] space-y-6">
       <Button asChild variant="ghost">
         <Link href="/">
           <ArrowLeft />
@@ -132,7 +142,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
         </Link>
       </Button>
 
-      <section className="grid items-start gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+      <section className="grid items-start gap-5 xl:grid-cols-[minmax(22rem,0.9fr)_minmax(0,1.1fr)] 2xl:gap-6">
         <RecipeImageFrame
           src={record.imagePath}
           alt=""
@@ -140,59 +150,56 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
           height={480}
           priority
           data-testid="recipe-detail-image-frame"
-          className="mx-auto w-full max-w-[26rem] self-start rounded-lg border bg-card shadow-soft lg:mx-0"
+          className="mx-auto w-full max-w-[38rem] self-start rounded-lg border bg-card shadow-soft xl:mx-0 xl:max-w-none"
         />
 
-        <div className="space-y-5">
+        <div
+          data-testid="recipe-detail-summary-panel"
+          className="self-start space-y-3 rounded-lg border bg-card/70 p-4 shadow-soft sm:p-5 xl:p-6"
+        >
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{titleCase(record.recipe.kosherType)}</Badge>
           </div>
 
-          <div className="space-y-3">
-            <h1 className="text-3xl font-bold leading-tight sm:text-5xl">{record.recipe.title}</h1>
-            <p className="text-base leading-7 text-muted-foreground">{record.recipe.notes}</p>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold leading-tight sm:text-3xl xl:text-[2.05rem]">{record.recipe.title}</h1>
+            <p className="text-sm leading-6 text-muted-foreground">{recipeDetailNotes(record.recipe.notes)}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-            <div className="rounded-lg border bg-card p-3">
-              <Clock className="mb-2 size-4 text-primary" />
+          <div className="grid gap-2 text-sm sm:grid-cols-3">
+            <div className="rounded-md border bg-background/70 p-2.5">
+              <Clock className="mb-1 size-3.5 text-primary" />
               <p className="font-semibold">{formatMinutes(totalTime)}</p>
               <p className="text-muted-foreground">Total</p>
             </div>
-            <div className="rounded-lg border bg-card p-3">
-              <UsersRound className="mb-2 size-4 text-primary" />
+            <div className="rounded-md border bg-background/70 p-2.5">
+              <UsersRound className="mb-1 size-3.5 text-primary" />
               <p className="font-semibold">{record.recipe.servings}</p>
               <p className="text-muted-foreground">Servings</p>
             </div>
-            <div className="rounded-lg border bg-card p-3">
-              <Flame className="mb-2 size-4 text-primary" />
+            <div className="rounded-md border bg-background/70 p-2.5">
+              <Flame className="mb-1 size-3.5 text-primary" />
               <p className="font-semibold">
                 {record.recipe.estimatedCaloriesPerServing ? `~${record.recipe.estimatedCaloriesPerServing}` : "n/a"}
               </p>
               <p className="text-muted-foreground">Cal/serving</p>
             </div>
-            <div className="rounded-lg border bg-card p-3">
-              <Check className="mb-2 size-4 text-primary" />
-              <p className="font-semibold">{checkedIngredients.size}/{record.recipe.ingredients.length}</p>
-              <p className="text-muted-foreground">Checked</p>
-            </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="grid gap-2 sm:grid-cols-3">
             <Button
               onClick={toggleSave}
-              size="lg"
               variant={isSaved ? "default" : "outline"}
               aria-pressed={isSaved}
             >
               <Heart fill={isSaved ? "currentColor" : "none"} />
               {isSaved ? "Favorited" : "Favorite"}
             </Button>
-            <Button type="button" onClick={addGroceries} variant="outline" size="lg">
+            <Button type="button" onClick={addGroceries} variant="outline">
               <ShoppingCart />
-              Add ingredients
+              Add all ingredients
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline">
               <Link href={`/generate?variation=${record.id}`}>
                 <RefreshCw />
                 Find variations
@@ -204,7 +211,6 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
               {groceryMessage}
             </div>
           ) : null}
-          <RecipeProfileSelector onProfileChange={handleProfileChange} />
         </div>
       </section>
 
@@ -214,7 +220,7 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
             <ShoppingCart className="size-5 text-primary" />
             Shopping
           </CardTitle>
-          <CardDescription>Open quick searches for anything you do not have locally.</CardDescription>
+          <CardDescription>Add ingredients to groceries, with specialty kosher meat links where useful.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button type="button" variant="outline" onClick={() => copyText(ingredientListText, "full-list")}>
@@ -224,8 +230,9 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
 
           <div className="space-y-3">
             {shoppingIngredients.map((ingredient, index) => {
-              const links = shoppingLinksForIngredient(ingredient);
+              const links = recipeDetailStoreLinks(ingredient);
               const copyLabel = `ingredient-${index}`;
+              const addLabel = `Add ${getShoppingName(ingredient)} to groceries`;
 
               return (
                 <div key={`${ingredient.name}-shopping-${index}`} className="rounded-lg border bg-background p-3">
@@ -243,6 +250,17 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
                           </a>
                         </Button>
                       ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="size-11"
+                        onClick={() => addIngredient(ingredient)}
+                        aria-label={addLabel}
+                        title="Add to groceries"
+                      >
+                        <ShoppingCart />
+                      </Button>
                       <Button type="button" variant="secondary" size="sm" onClick={() => copyText(formatIngredientForCopy(ingredient), copyLabel)}>
                         <Copy />
                         {copiedItem === copyLabel ? "Copied" : "Copy"}
@@ -271,13 +289,30 @@ export function RecipeDetailClient({ id }: RecipeDetailClientProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {record.recipe.ingredients.map((ingredient, index) => (
-              <label key={`${ingredient.name}-${index}`} className="flex cursor-pointer items-start gap-3 rounded-lg border bg-background p-3">
+              <div key={`${ingredient.name}-${index}`} className="flex items-start gap-3 rounded-lg border bg-background p-3">
                 <Checkbox checked={checkedIngredients.has(index)} onCheckedChange={() => toggleIngredient(index)} aria-label={`Check ${ingredient.name}`} />
-                <span className={checkedIngredients.has(index) ? "text-muted-foreground line-through" : ""}>
-                  <span className="font-medium">{ingredient.quantity} {ingredient.unit}</span>{" "}
-                  <span>{ingredient.name}</span>
-                </span>
-              </label>
+                <button
+                  type="button"
+                  className="min-w-0 flex-1 text-left focus-ring"
+                  onClick={() => toggleIngredient(index)}
+                >
+                  <span className={checkedIngredients.has(index) ? "text-muted-foreground line-through" : ""}>
+                    <span className="font-medium">{ingredient.quantity} {ingredient.unit}</span>{" "}
+                    <span>{ingredient.name}</span>
+                  </span>
+                </button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="size-11"
+                  onClick={() => addIngredient(ingredient)}
+                  aria-label={`Add ${getShoppingName(ingredient)} to groceries`}
+                  title="Add to groceries"
+                >
+                  <ShoppingCart />
+                </Button>
+              </div>
             ))}
           </CardContent>
         </Card>

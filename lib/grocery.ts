@@ -1,6 +1,6 @@
 import type { GroceryListItem, RecipeIngredient, RecipeRecord, SavedRecipe, ShoppingStore } from "@/lib/schemas";
 import { groceryListItemSchema } from "@/lib/schemas";
-import { getShoppingName, shoppingLinksForIngredient, type ShoppingLink } from "@/lib/shopping";
+import { getShoppingName, isKosherMeatSearch, shoppingLinksForIngredient, type ShoppingLink } from "@/lib/shopping";
 
 export type GroceryAddResult = {
   added: number;
@@ -16,6 +16,22 @@ export type GroceryStoreGroup = {
     alternateLinks: ShoppingLink[];
   }>;
 };
+
+export type WalmartCartSpec = {
+  store: "walmart";
+  cartSpecVersion: 1;
+  profileId: string;
+  items: Array<{
+    name: string;
+    shoppingName: string;
+    cartQuantity: number;
+    targetPackage: string;
+    searchUrl: string;
+    strictKosher?: true;
+  }>;
+};
+
+export type WalmartOrderManifest = WalmartCartSpec;
 
 type UnitInfo = {
   category: "volume" | "weight" | "count";
@@ -64,6 +80,39 @@ const FRACTION_GLYPHS: Record<string, string> = {
   "⅝": "5/8",
   "⅞": "7/8"
 };
+
+type WalmartCartTarget = {
+  patterns: string[];
+  targetPackage: string;
+  cartQuantity: number;
+};
+
+const WALMART_CART_TARGETS: WalmartCartTarget[] = [
+  { patterns: ["garlic"], targetPackage: "1 fresh bulb or pack", cartQuantity: 1 },
+  { patterns: ["fresh parsley", "parsley"], targetPackage: "1 bunch", cartQuantity: 1 },
+  { patterns: ["lemons", "lemon"], targetPackage: "2 fresh lemons", cartQuantity: 2 },
+  { patterns: ["yellow onions", "onions"], targetPackage: "1 bag or 2 medium onions", cartQuantity: 1 },
+  { patterns: ["zucchini"], targetPackage: "2 whole zucchini", cartQuantity: 2 },
+  { patterns: ["carrots"], targetPackage: "1 lb bag carrots", cartQuantity: 1 },
+  { patterns: ["cauliflower rice"], targetPackage: "about 4 frozen or packaged bags", cartQuantity: 4 },
+  { patterns: ["ground sumac", "sumac"], targetPackage: "1 spice jar", cartQuantity: 1 },
+  { patterns: ["celery"], targetPackage: "1 bunch/stalk bag", cartQuantity: 1 },
+  { patterns: ["fennel bulb", "fennel"], targetPackage: "1 fresh fennel bulb", cartQuantity: 1 },
+  { patterns: ["basmati rice"], targetPackage: "1 ordinary bag", cartQuantity: 1 },
+  { patterns: ["cod fillets", "cod"], targetPackage: "1 plain 12-16 oz pack", cartQuantity: 1 },
+  { patterns: ["ground coriander", "coriander"], targetPackage: "1 spice jar", cartQuantity: 1 },
+  { patterns: ["limes", "lime"], targetPackage: "2 fresh limes", cartQuantity: 2 },
+  { patterns: ["fresh mint", "mint"], targetPackage: "1 bunch or clamshell", cartQuantity: 1 },
+  { patterns: ["kale"], targetPackage: "1 bunch or bag", cartQuantity: 1 },
+  { patterns: ["butternut squash", "squash"], targetPackage: "1 squash or pre-cut pack", cartQuantity: 1 },
+  { patterns: ["atlantic salmon fillets", "salmon fillets", "salmon"], targetPackage: "1 plain 12-16 oz pack", cartQuantity: 1 },
+  { patterns: ["fish fillets", "walleye", "halibut", "snapper", "seabass", "trout", "tuna", "fillets"], targetPackage: "1 plain 12-16 oz pack", cartQuantity: 1 }
+];
+
+const STRICT_KOSHER_MEAT_WORDS = new Set(["beef", "chicken", "duck", "lamb", "meat", "steak", "thigh", "thighs", "turkey"]);
+const WALMART_BLOCKED_MEAT_WORDS = new Set(["beef", "brisket", "chicken", "duck", "lamb", "meat", "poultry", "roast", "steak", "thigh", "thighs", "turkey", "veal"]);
+const WALMART_ALLOWED_FISH_WORDS = new Set(["cod", "fish", "halibut", "salmon", "seabass", "snapper", "trout", "tuna", "walleye"]);
+const SPECIALTY_KOSHER_MEAT_STORES: ShoppingStore[] = ["kosh", "grow-and-behold", "kol-foods", "specialty-kosher"];
 
 function stripKosherLabel(value: string) {
   return value.replace(/\s*\((?:meat|dairy|parve)\)\s*/gi, "").replace(/\s+/g, " ").trim();
@@ -287,6 +336,10 @@ export function formatGroceryItem(item: GroceryListItem) {
   return [item.quantity, item.unit, item.displayName].filter(Boolean).join(" ");
 }
 
+export function sortGroceryItemsForDisplay(items: GroceryListItem[]) {
+  return [...items].sort((left, right) => Number(left.checked) - Number(right.checked));
+}
+
 export function groupGroceryItemsByStore(items: GroceryListItem[]) {
   const groups = new Map<ShoppingStore, GroceryStoreGroup>();
 
@@ -305,6 +358,99 @@ export function groupGroceryItemsByStore(items: GroceryListItem[]) {
   }
 
   return Array.from(groups.values());
+}
+
+export function specialtyKosherMeatLinksForGroceryItem(item: GroceryListItem) {
+  if (item.pantryStaple || item.checked || !isKosherMeatSearch(`${item.shoppingName} ${item.displayName}`)) return [];
+  return shoppingLinksForIngredient({
+    ...groceryItemToIngredient(item),
+    preferredStores: SPECIALTY_KOSHER_MEAT_STORES
+  }).filter((link) => SPECIALTY_KOSHER_MEAT_STORES.includes(link.store));
+}
+
+export function groupSpecialtyKosherMeatItemsByStore(items: GroceryListItem[]) {
+  const groups = new Map<ShoppingStore, GroceryStoreGroup>();
+
+  for (const item of items) {
+    const [primaryLink, ...alternateLinks] = specialtyKosherMeatLinksForGroceryItem(item);
+    if (!primaryLink) continue;
+
+    const group = groups.get(primaryLink.store) ?? {
+      store: primaryLink.store,
+      label: primaryLink.label,
+      items: []
+    };
+    group.items.push({ item, primaryLink, alternateLinks });
+    groups.set(primaryLink.store, group);
+  }
+
+  return Array.from(groups.values());
+}
+
+export function walmartLinkForGroceryItem(item: GroceryListItem) {
+  if (item.pantryStaple || item.checked) return undefined;
+  return shoppingLinksForGroceryItem(item).find((link) => link.store === "walmart");
+}
+
+function isWalmartCartEligibleGroceryItem(item: GroceryListItem) {
+  const words = new Set(`${item.shoppingName} ${item.displayName}`.toLowerCase().match(/[a-z]+/g) ?? []);
+  const hasBlockedMeat = Array.from(WALMART_BLOCKED_MEAT_WORDS).some((word) => words.has(word));
+  const hasAllowedFish = Array.from(WALMART_ALLOWED_FISH_WORDS).some((word) => words.has(word));
+  return !hasBlockedMeat || hasAllowedFish;
+}
+
+export function walmartOrderItems(items: GroceryListItem[]) {
+  return items.flatMap((item) => {
+    if (!isWalmartCartEligibleGroceryItem(item)) return [];
+    const walmartLink = walmartLinkForGroceryItem(item);
+    return walmartLink ? [{ item, walmartLink }] : [];
+  });
+}
+
+function isStrictKosherMeatItem(item: GroceryListItem) {
+  const words = new Set(`${item.shoppingName} ${item.displayName}`.toLowerCase().match(/[a-z]+/g) ?? []);
+  return words.has("kosher") && Array.from(STRICT_KOSHER_MEAT_WORDS).some((word) => words.has(word));
+}
+
+function walmartCartTargetForGroceryItem(item: GroceryListItem) {
+  const haystack = normalizeGroceryKey(`${item.shoppingName} ${item.displayName}`);
+  const target = WALMART_CART_TARGETS.find((candidate) => candidate.patterns.some((pattern) => haystack.includes(pattern)));
+  return {
+    targetPackage: target?.targetPackage ?? "1 practical Walmart grocery package",
+    cartQuantity: target?.cartQuantity ?? 1,
+    strictKosher: isStrictKosherMeatItem(item)
+  };
+}
+
+export function buildWalmartOrderManifest(items: GroceryListItem[], profileId: string): WalmartOrderManifest {
+  return {
+    store: "walmart",
+    cartSpecVersion: 1,
+    profileId,
+    items: walmartOrderItems(items).map(({ item, walmartLink }) => {
+      const target = walmartCartTargetForGroceryItem(item);
+      const specItem: WalmartCartSpec["items"][number] = {
+        name: item.displayName,
+        shoppingName: item.shoppingName,
+        cartQuantity: target.cartQuantity,
+        targetPackage: target.targetPackage,
+        searchUrl: walmartLink.href
+      };
+      if (target.strictKosher) specItem.strictKosher = true;
+      return specItem;
+    })
+  };
+}
+
+export function buildWalmartCartAgentPrompt(items: GroceryListItem[], profileId: string) {
+  return [
+    "Use $walmart-grocery-cart to add this KosherTable Walmart cart spec to my Walmart cart.",
+    "Use a fresh Walmart-only Chrome window in my current profile.",
+    "Preserve existing cart contents and do not checkout.",
+    "Prefer Walmart items I have bought before when Walmart shows that option and the item is still a practical match.",
+    "",
+    JSON.stringify(buildWalmartOrderManifest(items, profileId), null, 2)
+  ].join("\n");
 }
 
 export function buildGroceryAgentManifest(items: GroceryListItem[], profileId: string) {

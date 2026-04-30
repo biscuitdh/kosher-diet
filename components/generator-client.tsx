@@ -34,7 +34,13 @@ import {
   type FinderSearch,
   type Recipe
 } from "@/lib/schemas";
-import { findRecipeById, loadFinderDraft, loadRecentSearches, saveFinderDraft, saveRecentSearch } from "@/lib/storage";
+import {
+  findRecipeById,
+  loadFinderDraft,
+  loadRecentSearches,
+  saveFinderDraft,
+  saveRecentSearch
+} from "@/lib/storage";
 import { cn, formatMinutes, titleCase } from "@/lib/utils";
 import { validateRecipeSafety } from "@/lib/validators/forbidden-ingredients";
 
@@ -60,7 +66,7 @@ function SuggestionChips({
             key={suggestion.value}
             type="button"
             onClick={() => onPick(suggestion.value)}
-            className="min-h-8 rounded-md border border-input bg-background px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground focus-ring"
+            className="min-h-11 rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground focus-ring"
           >
             {suggestion.label}
           </button>
@@ -134,7 +140,6 @@ function SelectWithCustom({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={customPlaceholder}
-          className="h-10"
         />
       ) : null}
     </div>
@@ -208,7 +213,7 @@ function LimitChips({
               onClick={() => onChange(option.value)}
               aria-pressed={active}
               className={cn(
-                "min-h-8 rounded-md border px-3 py-1 text-xs font-semibold transition-colors focus-ring",
+                "min-h-11 rounded-md border px-3 py-2 text-sm font-semibold transition-colors focus-ring",
                 active
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-input bg-background text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
@@ -237,7 +242,7 @@ function DeviceChips({ value, onChange }: { value: CookingDevice; onChange: (val
               onClick={() => onChange(device)}
               aria-pressed={active}
               className={cn(
-                "min-h-8 rounded-md border px-3 py-1 text-xs font-semibold transition-colors focus-ring",
+                "min-h-11 rounded-md border px-3 py-2 text-sm font-semibold transition-colors focus-ring",
                 active
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-input bg-background text-muted-foreground hover:bg-secondary hover:text-secondary-foreground"
@@ -270,8 +275,8 @@ function RecipeMatchCard({
       onClick={() => onOpen(record)}
       aria-label={`View ${record.recipe.title}`}
       className={cn(
-        "group grid w-full overflow-hidden rounded-lg border bg-background text-left shadow-soft transition hover:-translate-y-0.5 hover:bg-secondary/55 hover:shadow-lg focus-ring",
-        compact ? "grid-cols-[5.5rem_1fr]" : "sm:grid-cols-[8rem_1fr]"
+        "group grid w-full min-w-0 items-center overflow-hidden rounded-lg border bg-background text-left shadow-soft transition hover:-translate-y-0.5 hover:bg-secondary/55 hover:shadow-lg focus-ring",
+        compact ? "grid-cols-[5.25rem_minmax(0,1fr)]" : "sm:grid-cols-[8rem_minmax(0,1fr)]"
       )}
     >
       <RecipeImageFrame
@@ -280,37 +285,37 @@ function RecipeMatchCard({
         width={360}
         height={270}
         data-testid="recipe-match-image-frame"
-        className={cn("relative self-start", compact ? "w-[5.5rem]" : "sm:w-32")}
+        className={cn("relative self-center", compact ? "w-[5.25rem]" : "sm:w-32")}
         imageClassName="transition duration-300 group-hover:scale-105"
       />
-      <div className="min-w-0 space-y-2 p-3">
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="secondary" className="text-[0.65rem]">
+      <div className="flex min-h-20 min-w-0 flex-col justify-start gap-1.5 p-2 sm:p-2.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-1">
+          <Badge variant="secondary" className="px-1.5 py-0.5 text-[0.6rem] leading-none sm:text-[0.65rem]">
             {titleCase(record.recipe.kosherType)}
           </Badge>
           {record.catalog.kosherForPassover ? (
-            <Badge variant="outline" className="text-[0.65rem]">
+            <Badge variant="outline" className="px-1.5 py-0.5 text-[0.6rem] leading-none sm:text-[0.65rem]">
               Passover
             </Badge>
           ) : null}
-          <Badge variant="outline" className="text-[0.65rem]">
+          <Badge variant="outline" className="max-w-[6.75rem] truncate px-1.5 py-0.5 text-[0.6rem] leading-none sm:max-w-[8rem] sm:text-[0.65rem]">
             {record.catalog.cookingMethod}
           </Badge>
         </div>
-        <p className="line-clamp-2 text-sm font-semibold leading-snug">{record.recipe.title}</p>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          <span>{record.catalog.occasion}</span>
+        <p className="line-clamp-2 text-[0.8rem] font-semibold leading-snug sm:text-sm">{record.recipe.title}</p>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.7rem] leading-tight text-muted-foreground sm:text-xs">
+          <span className="max-w-[8rem] truncate">{record.catalog.occasion}</span>
           <span className="inline-flex items-center gap-1">
-            <UsersRound className="size-3.5" />
+            <UsersRound className="size-3" />
             {record.recipe.servings}
           </span>
           <span className="inline-flex items-center gap-1">
-            <Clock className="size-3.5" />
+            <Clock className="size-3" />
             {formatMinutes(totalTime)}
           </span>
           {record.recipe.estimatedCaloriesPerServing ? (
             <span className="inline-flex items-center gap-1">
-              <Flame className="size-3.5" />~{record.recipe.estimatedCaloriesPerServing}
+              <Flame className="size-3" />~{record.recipe.estimatedCaloriesPerServing}
             </span>
           ) : null}
         </div>
@@ -521,11 +526,15 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
     };
   }, [draftLoaded, finderSearch, hasIncompleteCustomSelect, mode, router, searchParamString, variationOf]);
 
-  function rememberCurrentSearch() {
+  function rememberSearch(search: FinderSearch) {
     clearPendingFinderPersistence();
-    saveFinderDraft(finderSearch);
-    saveRecentSearch(finderSearch);
+    saveFinderDraft(search);
+    saveRecentSearch(search);
     setRecentSearches(loadRecentSearches());
+  }
+
+  function rememberCurrentSearch() {
+    rememberSearch(finderSearch);
   }
 
   function finderHref(path: "/find" | "/generate", search: FinderSearch) {
@@ -602,7 +611,19 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
   const matchesSection = (
     <section className="space-y-4">
       <h1 className="sr-only">Browse</h1>
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <div
+          title="Kosher for Passover"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-semibold uppercase tracking-normal text-muted-foreground"
+        >
+          <span>KFP</span>
+          <Switch
+            id="browseKosherForPassover"
+            checked={kosherForPassover}
+            onCheckedChange={setKosherForPassover}
+            aria-label="Browse kosher for Passover"
+          />
+        </div>
         <Button type="button" variant="outline" onClick={refreshMatches}>
           <Shuffle className="size-4" />
           Shuffle
@@ -610,40 +631,28 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
       </div>
 
       <Card>
-        <CardContent className="space-y-3 p-4 sm:p-5">
-          <div className="grid gap-3 rounded-lg border bg-background/65 p-3 lg:grid-cols-3">
-            <div className="flex min-h-[5.25rem] items-center justify-between gap-4 rounded-md border border-input bg-background px-3 py-2">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-normal text-muted-foreground" htmlFor="browseKosherForPassover">
-                  Kosher for Passover
-                </label>
-                <p className="text-xs leading-5 text-muted-foreground">Strict no chametz or kitniyot.</p>
-              </div>
-              <Switch
-                id="browseKosherForPassover"
-                checked={kosherForPassover}
-                onCheckedChange={setKosherForPassover}
-                aria-label="Browse kosher for Passover"
-              />
-            </div>
+        <CardContent className="space-y-3 p-3 sm:p-4 lg:p-5">
+          <div className="grid gap-3 rounded-lg border bg-background/65 p-3 lg:grid-cols-2">
             <LimitChips label="Calories" value={maxCaloriesPerServing} options={calorieFilters} onChange={setMaxCaloriesPerServing} />
             <LimitChips label="Total time" value={maxTotalTimeMinutes} options={timeFilters} onChange={setMaxTotalTimeMinutes} />
-            <div className="rounded-md border border-input bg-background p-3 lg:col-span-3">
+            <div className="rounded-md border border-input bg-background p-3 lg:col-span-2">
               <DeviceChips value={cookingDevice} onChange={setCookingDevice} />
             </div>
           </div>
           {recipeMatches.length > 0 ? (
-            recipeMatches.map((record) => (
-              <RecipeMatchCard
-                key={record.id}
-                record={record}
-                compact
-                onOpen={(match) => {
-                  rememberCurrentSearch();
-                  openRecipe(match);
-                }}
-              />
-            ))
+            <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3 min-[1800px]:grid-cols-4">
+              {recipeMatches.map((record) => (
+                <RecipeMatchCard
+                  key={record.id}
+                  record={record}
+                  compact
+                  onOpen={(match) => {
+                    rememberCurrentSearch();
+                    openRecipe(match);
+                  }}
+                />
+              ))}
+            </div>
           ) : (
             <div className="space-y-3 rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
               <p>No matches under those filters. Loosen Passover, calorie, or time filters, or adjust the Find brief.</p>
@@ -663,7 +672,7 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
             <CardTitle>Recent searches</CardTitle>
             <CardDescription>Tap to restore the finder.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3 min-[1800px]:grid-cols-4">
             {recentSearches.map((search, index) => (
               <button
                 key={`${summarizeSearch(search)}-${index}`}
@@ -691,17 +700,17 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
   );
 
   if (mode === "matches") {
-    return <div className="mx-auto max-w-5xl space-y-5">{matchesSection}</div>;
+    return <div className="mx-auto max-w-[2200px] space-y-5">{matchesSection}</div>;
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
+    <div className="mx-auto max-w-[2200px] space-y-4">
       <h1 className="sr-only">Find</h1>
       <Card>
-        <CardContent className="p-4 sm:p-5">
-          <form className="space-y-4" onSubmit={submitBrief}>
+        <CardContent className="p-4 sm:p-5 lg:p-6">
+          <form className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,0.58fr)] xl:items-start" onSubmit={submitBrief}>
             {error ? (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="xl:col-span-2">
                 <AlertCircle className="size-4" />
                 <AlertTitle>Search blocked</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
@@ -709,14 +718,14 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
             ) : null}
 
             {variationOf ? (
-              <Alert>
+              <Alert className="xl:col-span-2">
                 <AlertTitle>Variation mode</AlertTitle>
                 <AlertDescription>Finding a distinct catalog variation of {variationOf.title}.</AlertDescription>
               </Alert>
             ) : null}
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3 rounded-lg border bg-background/65 px-3 py-2">
+            <div className="space-y-2 xl:col-start-2 xl:row-start-2">
+              <div className="flex min-h-14 items-center justify-between gap-3 rounded-lg border bg-background/65 px-3 py-2">
                 <label className="text-sm font-medium" htmlFor="kosherForPassover">
                   Kosher for Passover
                 </label>
@@ -727,92 +736,94 @@ export function GeneratorClient({ mode = "brief" }: GeneratorClientProps) {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectWithCustom
-                id="occasion"
-                label="Occasion"
-                value={occasion}
-                suggestions={occasionSuggestions}
-                custom={occasionIsCustom}
-                customPlaceholder="Sunday brunch"
-                onChange={setOccasion}
-                onCustomChange={setOccasionIsCustom}
-              />
-
-              <SelectWithCustom
-                id="cuisinePreference"
-                label="Cuisine preference"
-                value={cuisinePreference}
-                suggestions={cuisineSuggestions}
-                custom={cuisineIsCustom}
-                customPlaceholder="Persian, Moroccan, modern kosher..."
-                onChange={setCuisinePreference}
-                onCustomChange={setCuisineIsCustom}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-[1fr_11rem]">
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="mainIngredient">
-                  Main protein or veggie
-                </label>
-                <Input
-                  id="mainIngredient"
-                  value={mainIngredient}
-                  onChange={(event) => setMainIngredient(event.target.value)}
-                  placeholder="Chicken, lentils, mushrooms"
+            <div className="space-y-4 xl:col-start-1 xl:row-span-2 xl:row-start-2">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SelectWithCustom
+                  id="occasion"
+                  label="Occasion"
+                  value={occasion}
+                  suggestions={occasionSuggestions}
+                  custom={occasionIsCustom}
+                  customPlaceholder="Sunday brunch"
+                  onChange={setOccasion}
+                  onCustomChange={setOccasionIsCustom}
                 />
-                <SuggestionChips label="Main ingredient" suggestions={filteredMainIngredientSuggestions} onPick={setMainIngredient} />
+
+                <SelectWithCustom
+                  id="cuisinePreference"
+                  label="Cuisine preference"
+                  value={cuisinePreference}
+                  suggestions={cuisineSuggestions}
+                  custom={cuisineIsCustom}
+                  customPlaceholder="Persian, Moroccan, modern kosher..."
+                  onChange={setCuisinePreference}
+                  onCustomChange={setCuisineIsCustom}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-[1fr_11rem]">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="mainIngredient">
+                    Main protein or veggie
+                  </label>
+                  <Input
+                    id="mainIngredient"
+                    value={mainIngredient}
+                    onChange={(event) => setMainIngredient(event.target.value)}
+                    placeholder="Chicken, lentils, mushrooms"
+                  />
+                  <SuggestionChips label="Main ingredient" suggestions={filteredMainIngredientSuggestions} onPick={setMainIngredient} />
+                  <SuggestionChips
+                    label="Suggested sides"
+                    caption="Suggested sides"
+                    suggestions={sideSuggestions}
+                    onPick={(value) => setAvailableIngredients((current) => appendSuggestion(current, value))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="servings">
+                    Servings
+                  </label>
+                  <Select value={servings} onValueChange={setServings}>
+                    <SelectTrigger id="servings">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[2, 4, 6, 8, 10, 12].map((value) => (
+                        <SelectItem key={value} value={String(value)}>
+                          {value}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="availableIngredients">
+                  Ingredients on hand or want to include
+                </label>
+                <Textarea
+                  id="availableIngredients"
+                  value={availableIngredients}
+                  onChange={(event) => setAvailableIngredients(event.target.value)}
+                  placeholder="Carrots, onions, quinoa, fresh herbs..."
+                />
                 <SuggestionChips
-                  label="Suggested sides"
-                  caption="Suggested sides"
-                  suggestions={sideSuggestions}
+                  label="Ingredients on hand"
+                  suggestions={filteredAvailableIngredientSuggestions}
                   onPick={(value) => setAvailableIngredients((current) => appendSuggestion(current, value))}
                 />
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="servings">
-                  Servings
-                </label>
-                <Select value={servings} onValueChange={setServings}>
-                  <SelectTrigger id="servings">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[2, 4, 6, 8, 10, 12].map((value) => (
-                      <SelectItem key={value} value={String(value)}>
-                        {value}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="availableIngredients">
-                Ingredients on hand or want to include
-              </label>
-              <Textarea
-                id="availableIngredients"
-                value={availableIngredients}
-                onChange={(event) => setAvailableIngredients(event.target.value)}
-                placeholder="Carrots, onions, quinoa, fresh herbs..."
-              />
-              <SuggestionChips
-                label="Ingredients on hand"
-                suggestions={filteredAvailableIngredientSuggestions}
-                onPick={(value) => setAvailableIngredients((current) => appendSuggestion(current, value))}
-              />
-            </div>
-
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <div className="grid gap-3 sm:grid-cols-2 xl:col-start-2 xl:row-start-3 xl:grid-cols-1">
               <Button type="button" variant="outline" onClick={surprise}>
                 <Dice5 />
                 Surprise Me
               </Button>
-              <Button type="submit" size="lg">
+              <Button type="submit" variant="outline">
                 <Search />
                 Find Recipe
               </Button>

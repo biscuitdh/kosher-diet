@@ -2,17 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { listCatalogRecipes } from "@/lib/catalog";
 import {
   createRecipeRecord,
-  createRecipeProfile,
   findRecipeById,
-  getSelectedRecipeProfile,
   loadFinderDraft,
   loadRecentSearches,
   loadSavedRecipes,
   loadSavedRecipesForProfile,
   saveFinderDraft,
   saveRecentSearch,
-  selectRecipeProfile,
-  upsertRecipeProfile,
   upsertSavedRecipe
 } from "@/lib/storage";
 import type { FinderSearch } from "@/lib/schemas";
@@ -40,8 +36,7 @@ describe("localStorage helpers", () => {
     expect(loadSavedRecipes()).toHaveLength(1);
   });
 
-  it("scopes saved recipe favorites by recipe profile", () => {
-    const profile = upsertRecipeProfile(createRecipeProfile("Sam"), true);
+  it("normalizes legacy profile favorites into the shared household list", () => {
     const record = createRecipeRecord({
       title: "Profile Pilaf",
       kosherType: "parve",
@@ -53,15 +48,10 @@ describe("localStorage helpers", () => {
       notes: ""
     });
 
-    upsertSavedRecipe({ ...record, profileId: profile.id });
-    expect(loadSavedRecipesForProfile(profile.id)).toHaveLength(1);
-
-    selectRecipeProfile("household");
-    expect(getSelectedRecipeProfile().name).toBe("Household");
-    expect(loadSavedRecipes()).toHaveLength(0);
-
-    selectRecipeProfile(profile.id);
+    upsertSavedRecipe({ ...record, profileId: "recipe-profile-sam" });
     expect(loadSavedRecipes()).toHaveLength(1);
+    expect(loadSavedRecipesForProfile("recipe-profile-sam")).toHaveLength(1);
+    expect(loadSavedRecipes()[0].profileId).toBe("household");
   });
 
   it("looks up bundled catalog recipes when localStorage has no match", () => {

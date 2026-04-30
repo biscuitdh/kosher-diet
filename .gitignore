@@ -4,6 +4,7 @@ node_modules
 # Next.js
 .build-workspaces
 .next
+.next-dev
 .next-export
 .next-build-check
 out

@@ -28,6 +28,7 @@ describe("shopping helpers", () => {
     expect(links[0]).toMatchObject({ store: "kosh", href: "https://www.kosh.com/chicken-breast-filets.html" });
     expect(links[1]?.store).toBe("grow-and-behold");
     expect(links[2]?.store).toBe("kol-foods");
+    expect(links.map((link) => link.store)).not.toContain("walmart");
   });
 
   it("uses direct overrides for specific kosher meat cuts", () => {
@@ -46,6 +47,26 @@ describe("shopping helpers", () => {
     const links = shoppingLinksForIngredient(ingredient);
     expect(links[0]).toMatchObject({ store: "kosh", href: "https://www.kosh.com/kosh-stew-meat-11512.html" });
     expect(links[1]).toMatchObject({ store: "grow-and-behold", href: "https://www.growandbehold.com/beef/" });
+  });
+
+  it("rejects off-domain and non-HTTPS store overrides", () => {
+    const ingredient: RecipeIngredient = {
+      name: "Kosher beef stew meat (meat)",
+      quantity: "12",
+      unit: "oz",
+      shoppingName: "kosher beef stew meat",
+      preferredStores: ["kosh", "walmart", "grow-and-behold"],
+      shoppingUrlOverrides: {
+        kosh: "https://evil.example/kosh-stew-meat-11512.html",
+        walmart: "http://www.walmart.com/search?q=kosher%20beef%20stew%20meat",
+        "grow-and-behold": "https://www.kosh.com/beef/"
+      }
+    };
+
+    const links = shoppingLinksForIngredient(ingredient);
+    expect(links[0]).toMatchObject({ store: "kosh", href: "https://www.kosh.com/kosh-stew-meat-11512.html" });
+    expect(links[1]).toMatchObject({ store: "walmart", href: "https://www.walmart.com/search?q=kosher%20beef%20stew%20meat" });
+    expect(links[2]).toMatchObject({ store: "grow-and-behold", href: "https://www.growandbehold.com/beef/" });
   });
 
   it("adds sensible fish links for walleye", () => {

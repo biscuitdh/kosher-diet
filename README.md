@@ -1,6 +1,6 @@
 # KosherTable
 
-KosherTable is a Next.js 15 MVP for kosher, nightshade-free, tomato-free meal planning. The default experience uses a bundled 1,000-recipe catalog for free mobile testing, includes 50+ walleye recipes, stores saved recipes locally in the browser, links ingredients to shopping searches, and keeps optional AI generation behind server-only code for later.
+KosherTable is a Next.js 15 MVP for kosher, nightshade-free, tomato-free meal planning. It uses a bundled 1,000-recipe catalog, supports shared household favorites and groceries, can sync them across devices with Supabase, and stays static: no recipe-generation API or paid inference path is exposed.
 
 ## Primary Recommendation
 
@@ -13,19 +13,7 @@ docker compose up web-dev
 
 Open `http://localhost:3000`.
 
-The app works without AI keys because `/generate` searches the local catalog. For optional local AI demo mode later, keep:
-
-```bash
-LLM_PROVIDER=mock
-```
-
-For real AI generation, set one provider:
-
-```bash
-LLM_PROVIDER=openai
-OPENAI_API_KEY=<your-openai-api-key>
-OPENAI_MODEL=gpt-4o
-```
+The app works without cloud services. To sync shared favorites and groceries across devices, create a Supabase project, run `docs/supabase-schema.sql`, then set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
 ## Alternatives
 
@@ -45,19 +33,10 @@ npm install
 npm run dev
 ```
 
-3. Provider swap:
+3. LAN preview:
 
 ```bash
-LLM_PROVIDER=anthropic
-ANTHROPIC_API_KEY=...
-ANTHROPIC_MODEL=claude-3-5-sonnet-latest
-```
-
-```bash
-LLM_PROVIDER=grok
-GROK_API_KEY=...
-GROK_MODEL=grok-2-latest
-GROK_BASE_URL=https://api.x.ai/v1
+npm run dev:lan
 ```
 
 ## V2 Local Preview
@@ -105,21 +84,25 @@ If Wi-Fi is not `en0`, check the active interface in macOS network settings. Kee
   - `/` dashboard
   - `/onboarding` redirect to generator for old links
   - `/generate` local catalog recipe finder with recipe-name search, strict Kosher for Passover filtering, and varied top-match rotation
+  - `/find` browseable catalog matches
+  - `/favorites` shared household favorited recipes
+  - `/groceries` editable and store-view grocery lists
   - `/recipes/[id]` recipe view with shopping links
   - `/recipes/local?id=...` static-safe localStorage recipe view
-  - `/api/recipes/generate` server API route
 - LocalStorage keys:
   - `koshertable.savedRecipes.v1`
   - `koshertable.generatedRecipes.v1`
-  - `koshertable.aiRateLimit.v1`
+  - `koshertable.recipeProfiles.v1`
+  - `koshertable.selectedRecipeProfileId.v1`
+  - `koshertable.groceryItems.v1`
+  - `koshertable.supabaseSession.v1`
   - `koshertable.finderDraft.v1`
   - `koshertable.recentSearches.v1`
-- AI providers:
-  - OpenAI-compatible OpenAI chat completions
-  - Anthropic messages
-  - Grok/xAI OpenAI-compatible chat completions
-  - Mock local provider
-  - Optional only; not required for the default catalog flow
+- Optional Supabase tables:
+  - `koshertable_recipe_profiles`
+  - `koshertable_favorite_recipes`
+  - `koshertable_grocery_items`
+  - `koshertable_user_preferences`
 - Recipe images:
   - 112 local dish-aware recipe image assets in `public/images/recipes/real/` and `public/images/recipes/ai/`
   - optional per-recipe catalog thumbnails in `public/images/recipes/catalog/catalog-0001.webp` through `catalog-1000.webp`
@@ -169,19 +152,11 @@ docker compose run --rm web-dev npm run images:check
 - The default catalog flow does not need API keys, a database, or paid inference.
 - The fixed food safety profile blocks nightshades and tomatoes.
 - Kosher validation still blocks pork, shellfish, non-kosher fish, meat/dairy mixing risks, blood, non-kosher gelatin, and non-kosher wine.
-- API keys never go to the browser when optional AI is enabled.
-- Production defaults fail closed if provider config is missing.
+- Supabase public anon keys can go to the browser; row-level security in `docs/supabase-schema.sql` scopes all synced data to the signed-in user.
 - Every bundled catalog recipe is schema-validated and checked against the fixed safety profile.
-- Shopping buttons are static outbound search/category links for Walmart, Wegmans, KŌSH, Grow & Behold, and KOL Foods. There is no scraping, login automation, or cart insertion.
+- Shopping buttons are static outbound links. Grocery-list Walmart cart prompts are agent handoffs only; the app does not log in, scrape, checkout, or place orders.
 - Kosher for Passover mode is strict no-kitniyot: no chametz, rice, corn, beans, lentils, chickpeas, soy, tofu, sesame, tahini, mustard, buckwheat, caraway, cardamom, fennel seeds, peas, or similar kitniyot.
-- Every optional LLM call uses the strict kosher/allergy system prompt verbatim.
-- The server forces the fixed safety profile on every generation request, even if a client submits weaker settings.
-- Server caps generation request bodies before JSON parsing, validates request shape with Zod, validates model output with Zod, then checks forbidden ingredients.
-- Client validates generated recipe safety again before saving or rendering.
-- Client-side AI limit remains available for the optional AI path: 5 AI calls per 10 minutes.
-- Server-side in-memory limit: 20 AI calls per hour, with bounded bucket storage. It uses a shared anonymous key unless `AI_RATE_LIMIT_TRUST_PROXY_HEADERS=true` is set behind a trusted proxy that strips spoofed forwarding headers.
-- In production with a real LLM provider, `/api/recipes/generate` requires `AI_GENERATION_API_KEY` and accepts it as `Authorization: Bearer <key>` or `x-ai-generation-key`.
-- No user-account auth in MVP. This is intentionally easy to wrap with Clerk later.
+- Generated/local recipe storage remains only for backward compatibility with old browsers; there is no UI or API path to create new recipes.
 
 ## Validation
 

@@ -94,7 +94,7 @@ const occasions = [
   "Light supper"
 ] as const;
 
-const meatStores: ShoppingStore[] = ["kosh", "grow-and-behold", "kol-foods", "walmart", "wegmans"];
+const meatStores: ShoppingStore[] = ["kosh", "grow-and-behold", "kol-foods", "wegmans"];
 const fishStores: ShoppingStore[] = ["walmart", "wegmans", "kosh"];
 const groceryStores: ShoppingStore[] = ["walmart", "wegmans"];
 const specialtyStores: ShoppingStore[] = ["wegmans", "walmart", "specialty-kosher"];

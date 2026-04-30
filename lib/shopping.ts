@@ -15,6 +15,22 @@ const STORE_LABELS: Record<ShoppingStore, string> = {
   "specialty-kosher": "Specialty kosher"
 };
 
+const ALLOWED_OVERRIDE_HOSTS: Record<ShoppingStore, readonly string[]> = {
+  walmart: ["walmart.com", "www.walmart.com"],
+  wegmans: ["wegmans.com", "www.wegmans.com"],
+  kosh: ["kosh.com", "www.kosh.com"],
+  "grow-and-behold": ["growandbehold.com", "www.growandbehold.com"],
+  "kol-foods": ["kolfoods.com", "www.kolfoods.com"],
+  "specialty-kosher": [
+    "kosh.com",
+    "www.kosh.com",
+    "growandbehold.com",
+    "www.growandbehold.com",
+    "kolfoods.com",
+    "www.kolfoods.com"
+  ]
+};
+
 function stripKosherLabel(value: string) {
   return value.replace(/\s*\((?:meat|dairy|parve)\)\s*/gi, "").replace(/\s+/g, " ").trim();
 }
@@ -70,10 +86,22 @@ function kolFoodsUrlFor(name: string) {
   return `https://kolfoods.com/search.php?search_query=${encoded}`;
 }
 
+function trustedOverrideUrl(store: ShoppingStore, override: string | undefined) {
+  if (!override) return undefined;
+
+  try {
+    const url = new URL(override);
+    if (url.protocol !== "https:") return undefined;
+    return ALLOWED_OVERRIDE_HOSTS[store].includes(url.hostname.toLowerCase()) ? url.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function shoppingUrl(store: ShoppingStore, ingredient: RecipeIngredient) {
   const name = getShoppingName(ingredient);
   const encoded = encodeURIComponent(name);
-  const override = ingredient.shoppingUrlOverrides?.[store];
+  const override = trustedOverrideUrl(store, ingredient.shoppingUrlOverrides?.[store]);
   if (override) return override;
 
   switch (store) {
@@ -100,7 +128,7 @@ export function shoppingLinksForIngredient(ingredient: RecipeIngredient): Shoppi
     ingredient.preferredStores && ingredient.preferredStores.length > 0
       ? ingredient.preferredStores
       : isKosherMeatSearch(name)
-        ? (["kosh", "grow-and-behold", "kol-foods", "walmart", "wegmans"] as ShoppingStore[])
+        ? (["kosh", "grow-and-behold", "kol-foods", "wegmans"] as ShoppingStore[])
         : isKosherFishSearch(name)
           ? (["walmart", "wegmans", "kosh"] as ShoppingStore[])
           : (["walmart", "wegmans"] as ShoppingStore[]);
