@@ -1,0 +1,92 @@
+name: KosherTable Firebase Hosting
+
+on:
+  pull_request:
+    paths:
+      - "**"
+  push:
+    branches:
+      - main
+    paths:
+      - "**"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    defaults:
+      run:
+        working-directory: .
+    env:
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: koshertable-prod
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Check recipe images
+        run: npm run images:check
+
+      - name: Build Firebase export
+        run: npm run build:firebase
+
+      - name: Check Firebase preview auth inputs
+        id: preview_auth_inputs
+        if: github.event_name == 'pull_request'
+        env:
+          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$GCP_WORKLOAD_IDENTITY_PROVIDER" ] && [ -n "$GCP_DEPLOY_SERVICE_ACCOUNT" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip Firebase preview deploy
+        if: github.event_name == 'pull_request' && steps.preview_auth_inputs.outputs.ready != 'true'
+        run: echo "Skipping Firebase preview deploy because GCP Workload Identity vars are not configured for this PR run."
+
+      - name: Authenticate to Google Cloud
+        if: github.event_name == 'push' || steps.preview_auth_inputs.outputs.ready == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Deploy Firebase preview
+        if: github.event_name == 'pull_request' && steps.preview_auth_inputs.outputs.ready == 'true'
+        run: npx --yes firebase-tools@15.16.0 hosting:channel:deploy pr-${{ github.event.pull_request.number }} --project koshertable-prod --only koshertable-prod --expires 7d
+
+      - name: Deploy Firebase live
+        if: github.event_name == 'push'
+        run: npx --yes firebase-tools@15.16.0 deploy --project koshertable-prod --only hosting:koshertable-prod
