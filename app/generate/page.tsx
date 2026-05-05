@@ -1,16 +1,13 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
-import { GeneratorClient } from "@/components/generator-client";
-import { Skeleton } from "@/components/ui/skeleton";
+import { GeneratorClientLoader } from "@/components/generator-client-loader";
+import { APP_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Find Recipes"
+  title: {
+    absolute: APP_NAME
+  }
 };
 
 export default function GeneratePage() {
-  return (
-    <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-      <GeneratorClient />
-    </Suspense>
-  );
+  return <GeneratorClientLoader />;
 }

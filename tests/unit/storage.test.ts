@@ -6,6 +6,7 @@ import {
   loadFinderDraft,
   loadRecentSearches,
   loadSavedRecipes,
+  loadSavedRecipesForProfile,
   saveFinderDraft,
   saveRecentSearch,
   upsertSavedRecipe
@@ -35,6 +36,24 @@ describe("localStorage helpers", () => {
     expect(loadSavedRecipes()).toHaveLength(1);
   });
 
+  it("normalizes legacy profile favorites into the shared household list", () => {
+    const record = createRecipeRecord({
+      title: "Profile Pilaf",
+      kosherType: "parve",
+      ingredients: [{ name: "Quinoa (parve)", quantity: "1", unit: "cup" }],
+      instructions: ["Cook."],
+      prepTimeMinutes: 1,
+      cookTimeMinutes: 2,
+      servings: 1,
+      notes: ""
+    });
+
+    upsertSavedRecipe({ ...record, profileId: "recipe-profile-sam" });
+    expect(loadSavedRecipes()).toHaveLength(1);
+    expect(loadSavedRecipesForProfile("recipe-profile-sam")).toHaveLength(1);
+    expect(loadSavedRecipes()[0].profileId).toBe("household");
+  });
+
   it("looks up bundled catalog recipes when localStorage has no match", () => {
     const catalogRecord = listCatalogRecipes()[0];
 
@@ -49,8 +68,8 @@ describe("localStorage helpers", () => {
       mainIngredient: "walleye",
       availableIngredients: "carrots",
       servings: 2,
-      extraNotes: "",
       kosherForPassover: true,
+      cookingDevice: "air-fryer",
       maxCaloriesPerServing: 500,
       maxTotalTimeMinutes: 45
     };
@@ -67,6 +86,9 @@ describe("localStorage helpers", () => {
     expect(searches).toHaveLength(8);
     expect(searches[0]?.mainIngredient).toBe("walleye 9");
     expect(searches.at(-1)?.mainIngredient).toBe("walleye 2");
+
+    saveRecentSearch({ ...baseSearch, cookingDevice: "slow-cooker" });
+    expect(loadRecentSearches()[0]?.cookingDevice).toBe("slow-cooker");
   });
 
   it("restores finder drafts", () => {
@@ -77,8 +99,8 @@ describe("localStorage helpers", () => {
       mainIngredient: "walleye",
       availableIngredients: "quinoa",
       servings: 2,
-      extraNotes: "make ahead",
       kosherForPassover: true,
+      cookingDevice: "slow-cooker",
       maxCaloriesPerServing: 400,
       maxTotalTimeMinutes: 30
     };

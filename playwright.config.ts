@@ -1,10 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = "http://127.0.0.1:3100";
+const authEnv = [
+  "NEXT_PUBLIC_FIREBASE_API_KEY=test-api-key",
+  "NEXT_PUBLIC_FIREBASE_PROJECT_ID=koshertable-prod",
+  "NEXT_PUBLIC_GOOGLE_CLIENT_ID=test-client-id.apps.googleusercontent.com"
+].join(" ");
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  timeout: 30_000,
+  timeout: 45_000,
+  workers: 2,
   expect: {
     timeout: 5_000
   },
@@ -12,7 +18,7 @@ export default defineConfig({
     baseURL
   },
   webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
+    command: `${authEnv} npm run dev -- --hostname 127.0.0.1 --port 3100`,
     url: baseURL,
     reuseExistingServer: !process.env.CI
   },

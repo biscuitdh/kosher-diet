@@ -1,6 +1,6 @@
 # KosherTable
 
-KosherTable is a Next.js 15 MVP for kosher, nightshade-free, tomato-free meal planning. The default experience uses a bundled 1,000-recipe catalog for free mobile testing, includes 50+ walleye recipes, stores saved recipes locally in the browser, links ingredients to shopping searches, and keeps optional AI generation behind server-only code for later.
+KosherTable is a Next.js 15 MVP for kosher, nightshade-free, tomato-free meal planning. It uses a bundled 1,000-recipe catalog, supports shared household favorites and groceries, requires Google sign-in before rendering the app, and syncs approved household data with Firebase Auth + Firestore. It stays static: no recipe-generation API or paid inference path is exposed.
 
 ## Primary Recommendation
 
@@ -13,19 +13,7 @@ docker compose up web-dev
 
 Open `http://localhost:3000`.
 
-The app works without AI keys because `/generate` searches the local catalog. For optional local AI demo mode later, keep:
-
-```bash
-LLM_PROVIDER=mock
-```
-
-For real AI generation, set one provider:
-
-```bash
-LLM_PROVIDER=openai
-OPENAI_API_KEY=<your-openai-api-key>
-OPENAI_MODEL=gpt-4o
-```
+The app content is locked until Google auth is configured and a signed-in account passes the Firestore `allowed_users` check. Create a Firebase project, enable Google sign-in, deploy `firestore.rules`, seed `allowed_users`, then set `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, and `NEXT_PUBLIC_GOOGLE_CLIENT_ID`. Full launch steps live in `docs/firebase-gcp-launch.md`.
 
 ## Alternatives
 
@@ -45,19 +33,18 @@ npm install
 npm run dev
 ```
 
-3. Provider swap:
+3. Local UI development without Google auth:
 
 ```bash
-LLM_PROVIDER=anthropic
-ANTHROPIC_API_KEY=...
-ANTHROPIC_MODEL=claude-3-5-sonnet-latest
+npm run dev:local -- --hostname 127.0.0.1 --port 3100
 ```
 
+Open `http://127.0.0.1:3100`. This enables `NEXT_PUBLIC_KOSHERTABLE_LOCAL_AUTH_BYPASS=true`, which only unlocks the app in non-production builds on `localhost`, `127.0.0.1`, or `::1`. Cloud sync stays disabled.
+
+4. LAN preview:
+
 ```bash
-LLM_PROVIDER=grok
-GROK_API_KEY=...
-GROK_MODEL=grok-2-latest
-GROK_BASE_URL=https://api.x.ai/v1
+npm run dev:lan
 ```
 
 ## V2 Local Preview
@@ -105,21 +92,24 @@ If Wi-Fi is not `en0`, check the active interface in macOS network settings. Kee
   - `/` dashboard
   - `/onboarding` redirect to generator for old links
   - `/generate` local catalog recipe finder with recipe-name search, strict Kosher for Passover filtering, and varied top-match rotation
+  - `/find` browseable catalog matches
+  - `/favorites` shared household favorited recipes
+  - `/groceries` editable and store-view grocery lists
   - `/recipes/[id]` recipe view with shopping links
   - `/recipes/local?id=...` static-safe localStorage recipe view
-  - `/api/recipes/generate` server API route
 - LocalStorage keys:
   - `koshertable.savedRecipes.v1`
   - `koshertable.generatedRecipes.v1`
-  - `koshertable.aiRateLimit.v1`
+  - `koshertable.recipeProfiles.v1`
+  - `koshertable.selectedRecipeProfileId.v1`
+  - `koshertable.groceryItems.v1`
+  - `koshertable.firebaseSession.v1`
   - `koshertable.finderDraft.v1`
   - `koshertable.recentSearches.v1`
-- AI providers:
-  - OpenAI-compatible OpenAI chat completions
-  - Anthropic messages
-  - Grok/xAI OpenAI-compatible chat completions
-  - Mock local provider
-  - Optional only; not required for the default catalog flow
+- Required Firebase/Firestore auth:
+  - Firebase Auth Google sign-in gates all app content.
+  - `allowed_users/{email}` whitelist documents approve who can open and sync the household app.
+  - shared `households/default` Firestore documents for favorites, groceries, and household preferences.
 - Recipe images:
   - 112 local dish-aware recipe image assets in `public/images/recipes/real/` and `public/images/recipes/ai/`
   - optional per-recipe catalog thumbnails in `public/images/recipes/catalog/catalog-0001.webp` through `catalog-1000.webp`
@@ -169,19 +159,11 @@ docker compose run --rm web-dev npm run images:check
 - The default catalog flow does not need API keys, a database, or paid inference.
 - The fixed food safety profile blocks nightshades and tomatoes.
 - Kosher validation still blocks pork, shellfish, non-kosher fish, meat/dairy mixing risks, blood, non-kosher gelatin, and non-kosher wine.
-- API keys never go to the browser when optional AI is enabled.
-- Production defaults fail closed if provider config is missing.
+- Firebase public web config can go to the browser; the UI renders only after sign-in, and `firestore.rules` restrict shared household data to signed-in whitelisted emails.
 - Every bundled catalog recipe is schema-validated and checked against the fixed safety profile.
-- Shopping buttons are static outbound search/category links for Walmart, Wegmans, KŌSH, Grow & Behold, and KOL Foods. There is no scraping, login automation, or cart insertion.
+- Shopping buttons are static outbound links. Grocery-list Walmart cart prompts are agent handoffs only; the app does not log in, scrape, checkout, or place orders.
 - Kosher for Passover mode is strict no-kitniyot: no chametz, rice, corn, beans, lentils, chickpeas, soy, tofu, sesame, tahini, mustard, buckwheat, caraway, cardamom, fennel seeds, peas, or similar kitniyot.
-- Every optional LLM call uses the strict kosher/allergy system prompt verbatim.
-- The server forces the fixed safety profile on every generation request, even if a client submits weaker settings.
-- Server caps generation request bodies before JSON parsing, validates request shape with Zod, validates model output with Zod, then checks forbidden ingredients.
-- Client validates generated recipe safety again before saving or rendering.
-- Client-side AI limit remains available for the optional AI path: 5 AI calls per 10 minutes.
-- Server-side in-memory limit: 20 AI calls per hour, with bounded bucket storage. It uses a shared anonymous key unless `AI_RATE_LIMIT_TRUST_PROXY_HEADERS=true` is set behind a trusted proxy that strips spoofed forwarding headers.
-- In production with a real LLM provider, `/api/recipes/generate` requires `AI_GENERATION_API_KEY` and accepts it as `Authorization: Bearer <key>` or `x-ai-generation-key`.
-- No user-account auth in MVP. This is intentionally easy to wrap with Clerk later.
+- Generated/local recipe storage remains only for backward compatibility with old browsers; there is no UI or API path to create new recipes.
 
 ## Validation
 
@@ -218,6 +200,29 @@ npm run build:github
 
 This writes the static site to `out/` with `NEXT_PUBLIC_BASE_PATH=/kosher-diet`. If the repository is renamed, update `build:github` before deploying.
 
+Firebase/GCP static export for `https://kosher.netsbyvets.org`:
+
+```bash
+npm run build:firebase
+firebase deploy --only hosting
+```
+
+This writes the static site to `out/` without a base path so Firebase Hosting serves it from `/`. See `docs/firebase-gcp-launch.md` for the GCP project, Firebase Auth/Firestore, whitelist, and Cloudflare DNS steps.
+
+Firebase/GCP infrastructure is managed with Terraform in `infra/terraform`:
+
+```bash
+cd infra/terraform/bootstrap
+terraform init
+terraform plan -out=tfplan
+
+cd ../prod
+terraform init
+terraform plan -out=tfplan
+```
+
+Terraform manages the `$5` monthly budget alert, Firebase/Firestore/Auth setup, Google sign-in provider, Cloudflare DNS records, and GitHub Workload Identity deploy access. GitHub Actions deploys Firebase preview channels for pull requests and live Hosting from `main`.
+
 For the current free testing setup, production is the `gh-pages` branch. GitHub Pages should be set to **Settings → Pages → Source → Deploy from a branch**, then **gh-pages / root**. The Pages URL is:
 
 ```text
@@ -226,7 +231,7 @@ https://biscuitdh.github.io/kosher-diet/
 
 ### Production Deploy Gate
 
-Do not auto-deploy from `main`. Do not add a GitHub Actions publisher unless the deployment policy changes.
+Firebase deploys may auto-deploy from `main` after the Terraform/GitHub variables are configured. GitHub Pages remains manually gated unless that deployment policy changes.
 
 Before any production push:
 

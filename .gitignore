@@ -2,7 +2,12 @@
 node_modules
 
 # Next.js
+.build-workspaces
 .next
+.next-dev
+.next-export
+.next-build-check
+.next-firebase-export
 out
 tsconfig.tsbuildinfo
 
@@ -14,6 +19,16 @@ test-results
 # environment
 .env
 .env*.local
+
+# Terraform
+infra/terraform/**/.terraform
+infra/terraform/**/*.tfstate
+infra/terraform/**/*.tfstate.*
+infra/terraform/**/terraform.tfvars
+infra/terraform/**/tfplan
+
+# Firebase
+.firebase
 
 # logs
 npm-debug.log*

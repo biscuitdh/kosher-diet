@@ -2,7 +2,7 @@
 
 Use one block at a time. Copy the full prompt into ChatGPT image generation or Apple Creative Studio, generate the image, then save/export it into:
 
-`/Users/biscuitdh/Projects/Kosher Site/public/images/recipes/ai/`
+`/Users/biscuitdh/Projects/webapps/apps/kosher-table/public/images/recipes/ai/`
 
 Use the exact target filename shown in each prompt. Prefer `.webp`; `.png` is also acceptable if the tool cannot export WebP.
 

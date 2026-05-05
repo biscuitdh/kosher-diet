@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "dev:local": "NEXT_PUBLIC_KOSHERTABLE_LOCAL_AUTH_BYPASS=true next dev",
     "dev:lan": "next dev --hostname 0.0.0.0 --port 3000",
     "build": "next build",
-    "build:github": "NEXT_OUTPUT_EXPORT=true NEXT_PUBLIC_BASE_PATH=/kosher-diet next build",
+    "build:github": "node scripts/build-github-isolated.mjs",
+    "build:firebase": "node scripts/build-firebase-isolated.mjs",
     "images:recipes": "node scripts/generate-recipe-images.mjs",
     "images:worklist": "node scripts/export-image-worklist.mjs",
     "images:catalog:worklist": "node --experimental-strip-types --loader ./scripts/ts-alias-loader.mjs scripts/export-catalog-image-worklist.mjs",
@@ -62,6 +64,6 @@
     "postcss": "^8.5.10"
   },
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=24.0.0 <25.0.0"
   }
 }
